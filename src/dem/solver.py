@@ -14,7 +14,10 @@ class DEMSolver:
         self.config = config
         self.particles = []
         self.time_step = config['simulation']['time_step']
-        self.gravity = np.array(config['simulation']['gravity'])
+        
+        # Set default gravity if not provided
+        default_gravity = np.array([0.0, -9.81, 0.0])  # Default gravity in y-direction
+        self.gravity = np.array(config['simulation'].get('gravity', default_gravity))
         
         # DEM parameters
         self.particle_radius = config['dem']['particle_radius']
