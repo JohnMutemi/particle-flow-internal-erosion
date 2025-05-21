@@ -1,0 +1,6 @@
+# Simulation configuration for DEM-based Internal Erosion Model
+simulation:
+  time_steps: 1000
+  output_interval: 100
+  domain_size: [1.0, 1.0, 1.0]
+  initial_particles: 100
