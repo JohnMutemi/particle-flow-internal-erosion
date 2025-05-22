@@ -7,32 +7,24 @@ A comprehensive Computational Fluid Dynamics (CFD) and Discrete Element Method (
 ```
 particle_flow_code/
 ├── src/                           # Source code directory
-│   ├── cfd/                       # CFD-related modules
-│   ├── dem/                       # DEM-related modules
-│   ├── coupling/                  # CFD-DEM coupling algorithms
-│   ├── coarse_grained/           # Coarse-grained simulation methods
 │   ├── models/                    # Physical models and equations
-│   ├── validation/               # Validation and verification tools
-│   ├── mitigation/               # Risk mitigation strategies
-│   ├── parallel/                 # Parallel computing implementations
-│   ├── experimental/             # Experimental data processing
-│   ├── calibration/              # Model calibration tools
-│   ├── case_studies/            # Case study implementations
-│   ├── visualization/            # Visualization tools
-│   ├── erosion/                  # Erosion modeling
-│   └── main.py                   # Main simulation entry point
+│   │   └── bond_model.py         # Seepage bond model implementation
+│   ├── coarse_grained/           # Coarse-grained simulation methods
+│   │   └── coarse_grained_model.py
+│   ├── coupling/                 # CFD-DEM coupling algorithms
+│   │   └── coupling_manager.py
+│   ├── validation/              # Validation and verification tools
+│   │   └── validation_manager.py
+│   ├── case_studies/           # Case study implementations
+│   │   └── tunnel_water_inrush.py
+│   └── visualization/           # Visualization tools
+│       └── visualizer.py
 │
 ├── tests/                        # Test suite
-│   ├── test_cfd.py              # CFD module tests
-│   ├── test_dem.py              # DEM module tests
+│   ├── test_bond_model.py       # Bond model tests
+│   ├── test_coarse_grained.py   # Coarse-grained model tests
 │   ├── test_coupling.py         # Coupling algorithm tests
-│   ├── test_erosion.py          # Erosion model tests
-│   ├── test_force_models.py     # Force model tests
-│   ├── test_main.py             # Main module tests
-│   ├── test_real_time_visualizer.py  # Visualization tests
-│   ├── test_tunnel_water_inrush.py   # Tunnel water inrush tests
-│   ├── test_visualization.py     # Visualization module tests
-│   └── conftest.py              # Test configuration
+│   └── test_validation.py       # Validation framework tests
 │
 ├── data/                         # Data directory
 │   ├── input/                    # Input data files
@@ -44,11 +36,8 @@ particle_flow_code/
 │
 ├── dashboard.py                  # Interactive dashboard
 ├── demo.py                       # Demo simulation script
-├── create_presentation.py        # Presentation generation script
 ├── config.yaml                   # Configuration file
 ├── requirements.txt              # Python dependencies
-├── setup.py                      # Package setup file
-├── pytest.ini                    # PyTest configuration
 └── README.md                     # This file
 ```
 
