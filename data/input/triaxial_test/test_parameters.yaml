@@ -1,0 +1,44 @@
+# Triaxial Test Parameters
+# Updated with personal geotechnical values
+
+test_type: "consolidation_drainage_triaxial_shear"
+
+# Sample Geometry
+sample:
+  diameter: 39.1  # mm
+  height: 80.0    # mm
+  volume: 95980.0 # mm³ (calculated)
+  density: 1.95-2.0  # g/cm³ (user value)
+  specific_gravity: 2.65  # user value
+  water_content: 8.1  # % (user value)
+
+# Particle Properties
+particles:
+  max_diameter: 2.0  # mm
+  min_diameter: 0.0  # mm (screened out particles below 2mm)
+  Cu: 7.9  # coefficient of uniformity (user value)
+  Cc: 1-2  # coefficient of curvature (user value)
+  clay_content_mass_percent: 5-15  # % (user value)
+  clay_particles_count: 10-20  # (user value)
+  gradation_curve: "see attached/linked data"  # reference to granular curve
+
+# Material Properties
+material:
+  type: "crushed_silt"
+  cohesion: 17.5    # kPa (user value)
+  friction_angle: 34.0  # degrees (user value)
+  unit_weight: 18.0  # kN/m³ (typical for silt, can be adjusted)
+  permeability: 1.1e-4  # cm/s (user value)
+
+# Test Conditions
+test_conditions:
+  drainage: "drained"
+  consolidation: true
+  confining_pressure: 100.0  # kPa (typical value, can be adjusted)
+  strain_rate: 0.1  # mm/min (typical value, can be adjusted)
+
+# Validation Parameters
+validation:
+  target_strength: 17.5  # kPa
+  target_friction: 34.0  # degrees
+  tolerance: 0.05  # 5% tolerance for validation 

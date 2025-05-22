@@ -1,0 +1,28 @@
+# Geotechnical parameters for triaxial test
+soil_properties:
+  density: 1800.0  # kg/m³
+  specific_gravity: 2.65
+  water_content: 0.15  # 15%
+  void_ratio: 0.45
+  porosity: 0.31
+  permeability: 1.0e-6  # m/s
+  cohesion: 5000.0  # Pa
+  friction_angle: 30.0  # degrees
+
+particle_properties:
+  mean_diameter: 0.002  # m
+  size_distribution:
+    Cu: 2.5  # Coefficient of uniformity
+    Cc: 1.2  # Coefficient of curvature
+  clay_content: 0.15  # 15%
+  mineral_composition:
+    quartz: 0.60
+    feldspar: 0.25
+    clay_minerals: 0.15
+
+test_conditions:
+  confining_pressure: 100000.0  # Pa
+  initial_water_pressure: 50000.0  # Pa
+  temperature: 20.0  # °C
+  duration: 3600.0  # s
+  sampling_rate: 10.0  # Hz 

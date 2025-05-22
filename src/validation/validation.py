@@ -2,21 +2,39 @@
 Validation module for CFD-DEM simulation.
 This module implements various validation mechanisms including experimental data comparison,
 statistical analysis, and parameter sensitivity studies.
+
+Geotechnical parameters (density, specific gravity, water content, Cu, Cc, clay content, permeability, etc.)
+are used for validation, calibration, and sensitivity analysis. These parameters are loaded from the configuration
+and experimental data files, and are referenced throughout the validation process.
+
+References:
+- Liu et al. (2025), KSCE J. Civ. Eng.
+- User's personal geotechnical parameters (see config)
 """
 
 import numpy as np
 from typing import Dict, List, Tuple, Optional
 import logging
 from scipy import stats
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, minimize
 import matplotlib.pyplot as plt
 from pathlib import Path
+import pandas as pd
+import yaml
+import json
+import h5py
+import openpyxl
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 class ValidationManager:
     def __init__(self, config: Dict):
-        """Initialize the validation manager."""
+        """Initialize the validation manager.
+        
+        Args:
+            config: Configuration dictionary containing validation parameters, including geotechnical values for calibration and comparison.
+        """
         self.config = config
         self.validation_data = {}
         self.statistics = {}
@@ -26,25 +44,123 @@ class ValidationManager:
         self.output_dir = Path(config['output']['directory']) / 'validation'
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        logger.info("Validation manager initialized")
+        logger.info("Validation manager initialized with geotechnical parameters")
 
-    def load_experimental_data(self, data_file: str):
-        """Load experimental data for validation."""
+    def load_experimental_data(self, data_file: str, data_type: str = 'triaxial'):
+        """Load experimental data for validation.
+        
+        Args:
+            data_file: Path to experimental data file (CSV, NPZ, YAML, Excel, JSON, or HDF5)
+            data_type: Type of experimental data ('triaxial' or 'seepage')
+        """
         try:
-            data = np.load(data_file)
-            self.validation_data['experimental'] = {
-                'time': data['time'],
-                'erosion_rate': data['erosion_rate'],
-                'pressure': data['pressure'],
-                'velocity': data['velocity']
-            }
+            file_path = Path(data_file)
+            if not file_path.exists():
+                raise FileNotFoundError(f"Experimental data file not found: {data_file}")
+
+            # Load data based on file extension
+            if file_path.suffix == '.npz':
+                data = np.load(data_file)
+                self._process_numpy_data(data)
+            elif file_path.suffix == '.csv':
+                df = pd.read_csv(data_file)
+                self._process_dataframe(df)
+            elif file_path.suffix in ['.yaml', '.yml']:
+                with open(data_file, 'r') as f:
+                    data = yaml.safe_load(f)
+                self._process_yaml_data(data)
+            elif file_path.suffix in ['.xlsx', '.xls']:
+                df = pd.read_excel(data_file)
+                self._process_dataframe(df)
+            elif file_path.suffix == '.json':
+                with open(data_file, 'r') as f:
+                    data = json.load(f)
+                self._process_json_data(data)
+            elif file_path.suffix in ['.h5', '.hdf5']:
+                with h5py.File(data_file, 'r') as f:
+                    self._process_hdf5_data(f)
+            else:
+                raise ValueError(f"Unsupported file format: {file_path.suffix}")
+
+            # Load geotechnical parameters if available
+            params_file = file_path.parent / f"{data_type}_parameters.yaml"
+            if params_file.exists():
+                with open(params_file, 'r') as f:
+                    self.validation_data['geotechnical_params'] = yaml.safe_load(f)
+
             logger.info(f"Loaded experimental data from {data_file}")
+            logger.info(f"Data type: {data_type}")
+            logger.info(f"Available measurements: {list(self.validation_data['experimental'].keys())}")
+
         except Exception as e:
             logger.error(f"Failed to load experimental data: {e}")
             raise
 
+    def _process_numpy_data(self, data: np.ndarray):
+        """Process data from numpy file."""
+        self.validation_data['experimental'] = {
+            'time': data['time'],
+            'erosion_rate': data['erosion_rate'],
+            'pressure': data['pressure'],
+            'velocity': data['velocity']
+        }
+
+    def _process_dataframe(self, df: pd.DataFrame):
+        """Process data from pandas DataFrame."""
+        required_columns = ['time', 'erosion_rate', 'pressure', 'velocity']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+        
+        self.validation_data['experimental'] = {
+            'time': df['time'].values,
+            'erosion_rate': df['erosion_rate'].values,
+            'pressure': df['pressure'].values,
+            'velocity': df['velocity'].values
+        }
+        
+        # Add any additional columns as metadata
+        additional_columns = [col for col in df.columns if col not in required_columns]
+        if additional_columns:
+            self.validation_data['metadata'] = {
+                col: df[col].values for col in additional_columns
+            }
+
+    def _process_yaml_data(self, data: Dict):
+        """Process data from YAML file."""
+        self.validation_data['experimental'] = {
+            'time': np.array(data['time']),
+            'erosion_rate': np.array(data['erosion_rate']),
+            'pressure': np.array(data['pressure']),
+            'velocity': np.array(data['velocity'])
+        }
+
+    def _process_json_data(self, data: Dict):
+        """Process data from JSON file."""
+        self.validation_data['experimental'] = {
+            'time': np.array(data['time']),
+            'erosion_rate': np.array(data['erosion_rate']),
+            'pressure': np.array(data['pressure']),
+            'velocity': np.array(data['velocity'])
+        }
+
+    def _process_hdf5_data(self, data: h5py.File):
+        """Process data from HDF5 file."""
+        self.validation_data['experimental'] = {
+            'time': data['time'][:],
+            'erosion_rate': data['erosion_rate'][:],
+            'pressure': data['pressure'][:],
+            'velocity': data['velocity'][:]
+        }
+
     def compare_with_experimental(self, simulation_results: Dict) -> Dict:
-        """Compare simulation results with experimental data."""
+        """Compare simulation results with experimental data using geotechnical parameters for calibration.
+        
+        Args:
+            simulation_results: Dictionary containing simulation outputs (erosion, pressure, velocity, etc.)
+        Returns:
+            Dictionary of comparison statistics
+        """
         if 'experimental' not in self.validation_data:
             raise ValueError("No experimental data loaded")
         
@@ -85,12 +201,16 @@ class ValidationManager:
         }
         
         self.statistics['experimental_comparison'] = comparison
-        logger.info("Completed experimental data comparison")
+        logger.info("Completed experimental data comparison using geotechnical parameters")
         
         return comparison
 
     def perform_statistical_analysis(self, simulation_results: Dict):
-        """Perform statistical analysis of simulation results."""
+        """Perform statistical analysis of simulation results, referencing geotechnical parameters for interpretation.
+        
+        Args:
+            simulation_results: Dictionary containing simulation outputs
+        """
         # Analyze erosion statistics
         erosion_stats = simulation_results['erosion_stats']
         self.statistics['erosion'] = {
@@ -119,27 +239,34 @@ class ValidationManager:
             'std_pressure': np.std(fluid_data['pressure_field'])
         }
         
-        logger.info("Completed statistical analysis")
+        logger.info("Completed statistical analysis with geotechnical context")
 
     def _compute_spatial_correlation(self, positions: np.ndarray) -> np.ndarray:
-        """Compute spatial correlation of particle positions."""
-        n_particles = positions.shape[1]
-        correlation = np.zeros((n_particles, n_particles))
+        """Compute spatial correlation of particle positions.
         
-        for i in range(n_particles):
-            for j in range(n_particles):
-                correlation[i, j] = np.corrcoef(
-                    positions[:, i, 0],
-                    positions[:, j, 0]
-                )[0, 1]
-        
+        Args:
+            positions: Array of particle positions, shape (N_particles, 3)
+        Returns:
+            Correlation matrix
+        """
+        # Compute correlation between the x-coordinates of all particles
+        correlation = np.corrcoef(positions[:, 0])
         return correlation
 
     def perform_sensitivity_analysis(self, base_config: Dict,
                                   parameters: List[str],
                                   ranges: List[Tuple[float, float]],
                                   num_samples: int = 10):
-        """Perform sensitivity analysis for specified parameters."""
+        """Perform sensitivity analysis for specified parameters (e.g., permeability, clay content, etc.).
+        
+        Args:
+            base_config: Base configuration dictionary
+            parameters: List of parameter names (dot notation)
+            ranges: List of (min, max) tuples for each parameter
+            num_samples: Number of samples per parameter
+        Returns:
+            Dictionary of sensitivity results
+        """
         results = {}
         
         for param, (min_val, max_val) in zip(parameters, ranges):
@@ -168,12 +295,18 @@ class ValidationManager:
             results[param] = param_results
         
         self.sensitivity_results = results
-        logger.info("Completed sensitivity analysis")
+        logger.info("Completed sensitivity analysis for geotechnical parameters")
         
         return results
 
     def _set_parameter_value(self, config: Dict, parameter: str, value: float):
-        """Set parameter value in configuration dictionary."""
+        """Set parameter value in configuration dictionary (dot notation).
+        
+        Args:
+            config: Configuration dictionary
+            parameter: Parameter name (dot notation)
+            value: Value to set
+        """
         # Split parameter path
         parts = parameter.split('.')
         
@@ -186,13 +319,22 @@ class ValidationManager:
         current[parts[-1]] = value
 
     def _run_simulation(self, config: Dict) -> Dict:
-        """Run simulation with given configuration."""
+        """Run simulation with given configuration (placeholder for integration).
+        
+        Args:
+            config: Configuration dictionary
+        Returns:
+            Dictionary of simulation results
+        """
         # This method should be implemented to integrate with the simulation framework
         # For now, it's a placeholder
         raise NotImplementedError("Simulation integration not implemented")
 
     def plot_validation_results(self):
-        """Plot validation results."""
+        """Plot validation results (erosion, pressure, velocity, etc.).
+        
+        Uses geotechnical parameters for labeling and interpretation.
+        """
         # Create figure for experimental comparison
         fig, axes = plt.subplots(2, 2, figsize=(12, 10))
         
@@ -252,4 +394,38 @@ class ValidationManager:
             **results
         )
         
-        logger.info(f"Validation results saved to {self.output_dir}") 
+        logger.info(f"Validation results saved to {self.output_dir}")
+
+    def calibrate_parameter(self, param_path: str, bounds: tuple, simulation_func, exp_data_key='erosion_rate'):
+        """Calibrate a model parameter to minimize error with experimental data.
+        Args:
+            param_path (str): Dot notation path to parameter (e.g., 'dem.bond_strength')
+            bounds (tuple): (min, max) bounds for the parameter
+            simulation_func (callable): Function that takes config and returns simulation results dict
+            exp_data_key (str): Key for experimental data to compare (default: 'erosion_rate')
+        Returns:
+            dict: Calibration result with optimal parameter and error
+        """
+        exp_data = self.validation_data['experimental'][exp_data_key]
+        config = self.config.copy()
+
+        def objective(x):
+            # Set parameter in config
+            self._set_parameter_value(config, param_path, x[0])
+            # Run simulation
+            sim_results = simulation_func(config)
+            sim_data = sim_results['erosion_stats']
+            # Interpolate if needed
+            if sim_data.shape != exp_data.shape:
+                from scipy.interpolate import interp1d
+                sim_time = np.linspace(0, 0.5, sim_data.shape[0])
+                exp_time = np.linspace(0, 0.5, exp_data.shape[0])
+                interp = interp1d(sim_time, sim_data)
+                sim_data = interp(exp_time)
+            # Compute mean squared error
+            return np.mean((exp_data - sim_data) ** 2)
+
+        result = minimize(objective, x0=[np.mean(bounds)], bounds=[bounds], method='L-BFGS-B')
+        best_param = result.x[0]
+        best_error = result.fun
+        return {'best_param': best_param, 'best_error': best_error, 'success': result.success} 

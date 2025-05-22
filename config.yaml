@@ -56,7 +56,7 @@ cfd:
     - 0.0
     - 0.0
     - 0.0
-  fluid_density: 950.0
+  fluid_density: 970.0
   fluid_viscosity: 0.0008
   pressure_gradient:
   - 1.0
@@ -97,7 +97,7 @@ dem:
   damping_coefficient: 0.1
   friction_coefficient: 0.5
   particle_density: 2650.0
-  particle_radius: 0.012
+  particle_radius: 0.009
   poisson_ratio: 0.3
   restitution_coefficient: 0.7
   youngs_modulus: 1e9
@@ -130,6 +130,42 @@ experimental:
     pressure: 0.01
     velocity: 0.05
   velocity_points: 3
+geotechnical:
+  Cc: 1.5
+  Cu: 7.9
+  clay_content: 10
+  cohesion: 17.5
+  density: 1.975
+  friction_angle: 34
+  grain_sizes:
+  - 13.0
+  - 11.0
+  - 9.0
+  - 8.0
+  - 6.0
+  - 5.0
+  - 4.0
+  - 3.0
+  - 2.0
+  - 1.0
+  - 0.5
+  - 0.1
+  passing_percentages:
+  - 95
+  - 93
+  - 98
+  - 85
+  - 77
+  - 70
+  - 62
+  - 53
+  - 40
+  - 20
+  - 5
+  - 0
+  permeability: 0.00011
+  specific_gravity: 2.65
+  water_content: 8.1
 mitigation:
   optimization:
     constraints:

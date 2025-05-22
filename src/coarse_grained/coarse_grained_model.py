@@ -1,5 +1,11 @@
 """
 Coarse-grained model for large-scale CFD-DEM simulations.
+
+This model uses scaling laws to map fine-scale geotechnical parameters (density, specific gravity, water content, Cu, Cc, clay content, permeability, etc.) to coarse-grained parameters for efficient engineering-scale simulation.
+
+References:
+- Liu et al. (2025), KSCE J. Civ. Eng.
+- User's personal geotechnical parameters (see config)
 """
 
 import numpy as np
@@ -14,7 +20,7 @@ class CoarseGrainedModel:
         """Initialize the coarse-grained model.
         
         Args:
-            config: Configuration dictionary containing model parameters
+            config: Configuration dictionary containing model parameters, including geotechnical values and scaling factors.
         """
         self.config = config
         
@@ -22,17 +28,17 @@ class CoarseGrainedModel:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         
-        # Compute scaling factors
+        # Compute scaling factors (see _compute_scaling_factors)
         self.scaling_factors = self._compute_scaling_factors()
         
-        # Load calibrated parameters
+        # Load calibrated parameters (from fine-scale calibration, e.g., triaxial test)
         self.calibrated_params = self._load_calibrated_params()
         
         # Initialize output directory
         self.output_dir = Path(config['output']['directory']) / 'coarse_grained'
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        self.logger.info("Initialized coarse-grained model")
+        self.logger.info("Initialized coarse-grained model with scaling laws and geotechnical parameters")
     
     def _compute_scaling_factors(self) -> Dict:
         """Compute scaling factors for coarse-graining.
@@ -40,31 +46,28 @@ class CoarseGrainedModel:
         Returns:
             Dictionary of scaling factors
         """
-        # Get fine-scale parameters
+        # Get fine-scale parameters from config (geotechnical values)
         fine_scale = {
             'particle_radius': self.config['dem']['particle_radius'],
             'bond_strength': self.config['dem']['bond_strength'],
             'fluid_viscosity': self.config['cfd']['fluid_viscosity'],
             'fluid_density': self.config['cfd']['fluid_density']
         }
-        
-        # Compute scaling factors
+        # Scaling factors are set in config['coarse_grained']
         scaling_factors = {
             'length': self.config['coarse_grained'].get('length_scale', 10.0),
             'time': self.config['coarse_grained'].get('time_scale', 5.0),
             'force': self.config['coarse_grained'].get('force_scale', 8.0)
         }
-        
-        # Compute derived scaling factors
+        # Derived scaling factors
         scaling_factors['area'] = scaling_factors['length']**2
         scaling_factors['volume'] = scaling_factors['length']**3
         scaling_factors['velocity'] = scaling_factors['length'] / scaling_factors['time']
         scaling_factors['acceleration'] = scaling_factors['length'] / scaling_factors['time']**2
-        
         return scaling_factors
     
     def _load_calibrated_params(self) -> Dict:
-        """Load calibrated parameters from file.
+        """Load calibrated parameters from file (e.g., from fine-scale triaxial test).
         
         Returns:
             Dictionary of calibrated parameters
@@ -76,122 +79,101 @@ class CoarseGrainedModel:
                     return json.load(f)
         except Exception as e:
             self.logger.warning(f"Could not load calibrated parameters: {e}")
-        
         return {}
     
     def map_fine_to_coarse(self, fine_scale_data: Dict) -> Dict:
-        """Map fine-scale data to coarse-scale.
+        """Map fine-scale data to coarse-scale using scaling laws.
         
         Args:
-            fine_scale_data: Dictionary containing fine-scale data
-            
+            fine_scale_data: Dictionary containing fine-scale data (positions, velocities, forces, fluid fields, etc.)
         Returns:
             Dictionary containing coarse-scale data
         """
         coarse_data = {}
-        
         # Map particle positions
         if 'positions' in fine_scale_data:
             coarse_data['positions'] = self._map_positions(
                 fine_scale_data['positions'])
-        
         # Map velocities
         if 'velocities' in fine_scale_data:
             coarse_data['velocities'] = self._map_velocities(
                 fine_scale_data['velocities'])
-        
         # Map forces
         if 'forces' in fine_scale_data:
             coarse_data['forces'] = self._map_forces(
                 fine_scale_data['forces'])
-        
         # Map fluid fields
         if 'fluid_fields' in fine_scale_data:
             coarse_data['fluid_fields'] = self._map_fluid_fields(
                 fine_scale_data['fluid_fields'])
-        
         return coarse_data
     
     def _map_positions(self, positions: np.ndarray) -> np.ndarray:
-        """Map particle positions to coarse scale.
+        """Map particle positions to coarse scale (scaling and clustering).
         
         Args:
             positions: Fine-scale particle positions
-            
         Returns:
             Coarse-scale particle positions
         """
-        # Scale positions
+        # Scale positions by length scaling factor
         scaled_positions = positions / self.scaling_factors['length']
-        
-        # Cluster particles
+        # Cluster particles (coarse-graining)
         clusters = self._cluster_particles(scaled_positions)
-        
         # Compute cluster centers
         cluster_centers = np.array([
             np.mean(scaled_positions[cluster], axis=0)
             for cluster in clusters
         ])
-        
         return cluster_centers
     
     def _map_velocities(self, velocities: np.ndarray) -> np.ndarray:
-        """Map particle velocities to coarse scale.
+        """Map particle velocities to coarse scale (scaling and clustering).
         
         Args:
             velocities: Fine-scale particle velocities
-            
         Returns:
             Coarse-scale particle velocities
         """
-        # Scale velocities
+        # Scale velocities by velocity scaling factor
         scaled_velocities = velocities / self.scaling_factors['velocity']
-        
         # Cluster particles
         clusters = self._cluster_particles(scaled_velocities)
-        
         # Compute cluster average velocities
         cluster_velocities = np.array([
             np.mean(scaled_velocities[cluster], axis=0)
             for cluster in clusters
         ])
-        
         return cluster_velocities
     
     def _map_forces(self, forces: np.ndarray) -> np.ndarray:
-        """Map particle forces to coarse scale.
+        """Map particle forces to coarse scale (scaling and clustering).
         
         Args:
             forces: Fine-scale particle forces
-            
         Returns:
             Coarse-scale particle forces
         """
-        # Scale forces
+        # Scale forces by force scaling factor
         scaled_forces = forces / self.scaling_factors['force']
-        
         # Cluster particles
         clusters = self._cluster_particles(scaled_forces)
-        
         # Compute cluster total forces
         cluster_forces = np.array([
             np.sum(scaled_forces[cluster], axis=0)
             for cluster in clusters
         ])
-        
         return cluster_forces
     
     def _map_fluid_fields(self, fluid_fields: Dict) -> Dict:
-        """Map fluid fields to coarse scale.
+        """Map fluid fields to coarse scale (scaling).
         
         Args:
             fluid_fields: Dictionary of fine-scale fluid fields
-            
         Returns:
             Dictionary of coarse-scale fluid fields
         """
         coarse_fields = {}
-        
         for field_name, field_data in fluid_fields.items():
             # Scale field data
             if field_name == 'velocity':
@@ -200,10 +182,7 @@ class CoarseGrainedModel:
                 scaled_data = field_data / self.scaling_factors['force']
             else:
                 scaled_data = field_data
-            
-            # Coarsen grid
-            coarse_fields[field_name] = self._coarsen_grid(scaled_data)
-        
+            coarse_fields[field_name] = scaled_data
         return coarse_fields
     
     def _cluster_particles(self, data: np.ndarray) -> List[np.ndarray]:

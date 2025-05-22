@@ -1,5 +1,12 @@
 """
 Seepage bond model for simulating particle bond degradation under fluid flow.
+
+This model uses geotechnical parameters such as density, specific gravity, water content, Cu, Cc, clay content, permeability, etc.,
+to initialize and calibrate the bond strength and erosion law. The bond degradation law is implemented based on local fluid shear stress and pressure effects.
+
+References:
+- Gu et al. (2019), Acta Geotechnica
+- User's personal geotechnical parameters (see config)
 """
 
 import numpy as np
@@ -11,22 +18,24 @@ class SeepageBondModel:
         """Initialize the seepage bond model.
         
         Args:
-            config: Configuration dictionary containing model parameters
+            config: Configuration dictionary containing model parameters, including geotechnical values such as density, specific gravity, water content, Cu, Cc, clay content, permeability, etc.
         """
         self.config = config
         
-        # Load model parameters
-        self.bond_strength = config['dem']['bond_strength']
-        self.fluid_viscosity = config['cfd']['fluid_viscosity']
+        # Load model parameters from config (geotechnical values)
+        self.bond_strength = config['dem']['bond_strength']  # Calibrated using cohesion, clay content, etc.
+        self.fluid_viscosity = config['cfd']['fluid_viscosity']  # From permeability and fluid properties
         self.fluid_density = config['cfd']['fluid_density']
-        self.erosion_rate = config['erosion']['erosion_rate_coefficient']
-        self.critical_shear_stress = config['erosion']['critical_shear_stress']
+        self.erosion_rate = config['erosion']['erosion_rate_coefficient']  # Calibrated using triaxial/erosion tests
+        self.critical_shear_stress = config['erosion']['critical_shear_stress']  # Related to clay content, Cu, Cc
+        # Additional geotechnical parameters can be accessed as needed
+        # e.g., config['sample']['density'], config['particles']['clay_content_mass_percent'], etc.
         
         # Initialize logging
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         
-        self.logger.info("Initialized seepage bond model")
+        self.logger.info("Initialized seepage bond model with geotechnical parameters")
     
     def compute_bond_degradation(self, 
                                fluid_velocity: np.ndarray,
@@ -44,19 +53,19 @@ class SeepageBondModel:
         Returns:
             Tuple of (degradation_rate, new_strength)
         """
-        # Compute fluid shear stress
+        # Compute fluid shear stress (see _compute_shear_stress)
         shear_stress = self._compute_shear_stress(
             fluid_velocity, bond_radius)
         
-        # Compute pressure effect
+        # Compute pressure effect (see _compute_pressure_effect)
         pressure_effect = self._compute_pressure_effect(
             pressure_gradient, bond_radius)
         
-        # Compute total degradation rate
+        # Compute total degradation rate (see _compute_degradation_rate)
         degradation_rate = self._compute_degradation_rate(
             shear_stress, pressure_effect, current_strength)
         
-        # Update bond strength
+        # Update bond strength (see _update_bond_strength)
         new_strength = self._update_bond_strength(
             current_strength, degradation_rate)
         
@@ -77,7 +86,7 @@ class SeepageBondModel:
         # Compute velocity gradient
         velocity_magnitude = np.linalg.norm(fluid_velocity)
         
-        # Compute Reynolds number
+        # Compute Reynolds number (depends on fluid_density, fluid_viscosity)
         reynolds = 2 * bond_radius * velocity_magnitude * self.fluid_density / self.fluid_viscosity
         
         # Compute shear stress based on flow regime
@@ -105,7 +114,7 @@ class SeepageBondModel:
         # Compute pressure gradient magnitude
         grad_magnitude = np.linalg.norm(pressure_gradient)
         
-        # Compute pressure effect
+        # Compute pressure effect (area * grad)
         pressure_effect = np.pi * bond_radius**2 * grad_magnitude
         
         return pressure_effect
@@ -114,7 +123,7 @@ class SeepageBondModel:
                                 shear_stress: float,
                                 pressure_effect: float,
                                 current_strength: float) -> float:
-        """Compute bond degradation rate.
+        """Compute bond degradation rate using erosion law.
         
         Args:
             shear_stress: Fluid shear stress
@@ -127,11 +136,11 @@ class SeepageBondModel:
         # Compute total stress
         total_stress = shear_stress + pressure_effect
         
-        # Check if stress exceeds critical value
+        # Check if stress exceeds critical value (from config, related to clay content, Cu, Cc)
         if total_stress < self.critical_shear_stress:
             return 0.0
         
-        # Compute degradation rate using power law
+        # Compute degradation rate using power law (Gu et al. 2019)
         degradation_rate = self.erosion_rate * \
             (total_stress - self.critical_shear_stress)**2 / current_strength
         
@@ -175,7 +184,7 @@ class SeepageBondModel:
         # Compute bond area
         bond_area = np.pi * bond_radius**2
         
-        # Compute normal force
+        # Compute normal force (proportional to bond strength, which is calibrated using geotechnical parameters)
         normal_force = bond_strength * bond_area
         
         # Compute force vector

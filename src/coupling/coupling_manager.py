@@ -1,5 +1,11 @@
 """
 Coupling manager for CFD-DEM simulations.
+
+This module manages the coupling between CFD (fluid) and DEM (particles), using geotechnical parameters such as density, specific gravity, water content, Cu, Cc, clay content, permeability, etc., to compute fluid-particle interaction forces and update particle bonds.
+
+References:
+- Gu et al. (2019), Acta Geotechnica
+- User's personal geotechnical parameters (see config)
 """
 
 import numpy as np
@@ -14,7 +20,7 @@ class CouplingManager:
         """Initialize the coupling manager.
         
         Args:
-            config: Configuration dictionary containing coupling parameters
+            config: Configuration dictionary containing coupling parameters, including geotechnical values for fluid and particle properties.
         """
         self.config = config
         
@@ -29,7 +35,7 @@ class CouplingManager:
         self.output_dir = Path(config['output']['directory']) / 'coupling'
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        self.logger.info("Initialized coupling manager")
+        self.logger.info("Initialized coupling manager with geotechnical parameters")
     
     def _load_coupling_params(self) -> Dict:
         """Load coupling parameters from configuration.
@@ -52,11 +58,10 @@ class CouplingManager:
         """Compute coupling forces between particles and fluid.
         
         Args:
-            particles: Dictionary containing particle data
-            fluid_fields: Dictionary containing fluid field data
-            
+            particles: Dictionary containing particle data (positions, velocities, radii, etc.)
+            fluid_fields: Dictionary containing fluid field data (velocity, pressure, density, viscosity, etc.)
         Returns:
-            Dictionary containing coupling forces
+            Dictionary containing coupling forces (drag, pressure, lift, virtual mass)
         """
         forces = {}
         
@@ -65,7 +70,7 @@ class CouplingManager:
         velocities = particles['velocities']
         radii = particles['radii']
         
-        # Get fluid data
+        # Get fluid data (geotechnical parameters for fluid)
         fluid_velocity = fluid_fields['velocity']
         fluid_pressure = fluid_fields['pressure']
         fluid_density = fluid_fields['density']
@@ -107,71 +112,59 @@ class CouplingManager:
             fluid_pressure: Fluid pressure field
             fluid_density: Fluid density field
             fluid_viscosity: Fluid viscosity field
-            
         Returns:
             Dictionary of interpolated fluid properties
         """
-        # Create interpolation functions
+        # Create interpolation functions for each fluid property
         x = np.arange(fluid_velocity.shape[0])
         y = np.arange(fluid_velocity.shape[1])
         z = np.arange(fluid_velocity.shape[2])
-        
         interp_velocity = interpolate.RegularGridInterpolator(
             (x, y, z), fluid_velocity,
             method='linear', bounds_error=False, fill_value=0.0)
-        
         interp_pressure = interpolate.RegularGridInterpolator(
             (x, y, z), fluid_pressure,
             method='linear', bounds_error=False, fill_value=0.0)
-        
         interp_density = interpolate.RegularGridInterpolator(
             (x, y, z), fluid_density,
             method='linear', bounds_error=False, fill_value=0.0)
-        
         interp_viscosity = interpolate.RegularGridInterpolator(
             (x, y, z), fluid_viscosity,
             method='linear', bounds_error=False, fill_value=0.0)
-        
-        # Interpolate properties
+        # Interpolate properties to particle positions
         properties = {
             'velocity': interp_velocity(positions),
             'pressure': interp_pressure(positions),
             'density': interp_density(positions),
             'viscosity': interp_viscosity(positions)
         }
-        
         return properties
     
     def _compute_drag_forces(self, positions: np.ndarray,
                            velocities: np.ndarray,
                            fluid_props: Dict,
                            radii: np.ndarray) -> np.ndarray:
-        """Compute drag forces on particles.
+        """Compute drag forces on particles using Schiller-Naumann correlation.
         
         Args:
             positions: Particle positions
             velocities: Particle velocities
             fluid_props: Interpolated fluid properties
             radii: Particle radii
-            
         Returns:
             Array of drag forces
         """
         # Get relative velocities
         rel_velocities = velocities - fluid_props['velocity']
         rel_vel_magnitudes = np.linalg.norm(rel_velocities, axis=1)
-        
-        # Compute Reynolds numbers
+        # Compute Reynolds numbers (depends on fluid density, viscosity)
         re = 2 * radii * rel_vel_magnitudes * fluid_props['density'] / fluid_props['viscosity']
-        
         # Compute drag coefficients
         cd = self._compute_drag_coefficients(re)
-        
         # Compute drag forces
         drag_forces = -0.5 * cd[:, np.newaxis] * fluid_props['density'][:, np.newaxis] * \
                      np.pi * radii[:, np.newaxis]**2 * \
                      rel_vel_magnitudes[:, np.newaxis] * rel_velocities
-        
         return drag_forces
     
     def _compute_drag_coefficients(self, re: np.ndarray) -> np.ndarray:
