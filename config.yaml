@@ -3,7 +3,7 @@ simulation:
   time_steps: 1000
   output_interval: 100
   domain_size: [100.0, 50.0, 50.0]  # [x, y, z] in meters
-  grid_resolution: [100, 50, 50]    # [nx, ny, nz]
+  grid_resolution: [101, 51, 51]    # [nx, ny, nz] - ensuring odd number of points for proper gradient computation
   time_step: 0.001                  # seconds
   total_time: 10.0                  # seconds
   initial_particles: 1000           # number of particles

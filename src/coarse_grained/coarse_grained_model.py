@@ -240,30 +240,40 @@ class CoarseGrainedModel:
         Returns:
             Coarse-scale grid data
         """
-        # Get grid dimensions
-        nx, ny, nz = field_data.shape
+        # Handle both scalar (3D) and vector (4D) fields
+        if field_data.ndim == 3:
+            nx, ny, nz = field_data.shape
+            nvec = None
+        elif field_data.ndim == 4:
+            nx, ny, nz, nvec = field_data.shape
+        else:
+            raise ValueError("field_data must be 3D or 4D array")
         
         # Compute coarse grid dimensions
-        nx_coarse = nx // self.scaling_factors['length']
-        ny_coarse = ny // self.scaling_factors['length']
-        nz_coarse = nz // self.scaling_factors['length']
+        scale = int(self.scaling_factors['length'])
+        nx_coarse = nx // scale
+        ny_coarse = ny // scale
+        nz_coarse = nz // scale
         
-        # Initialize coarse grid
-        coarse_data = np.zeros((nx_coarse, ny_coarse, nz_coarse))
+        if field_data.ndim == 3:
+            coarse_data = np.zeros((nx_coarse, ny_coarse, nz_coarse))
+        else:
+            coarse_data = np.zeros((nx_coarse, ny_coarse, nz_coarse, nvec))
         
         # Average fine grid data to coarse grid
         for i in range(nx_coarse):
             for j in range(ny_coarse):
                 for k in range(nz_coarse):
-                    i_fine = slice(i * self.scaling_factors['length'],
-                                 (i + 1) * self.scaling_factors['length'])
-                    j_fine = slice(j * self.scaling_factors['length'],
-                                 (j + 1) * self.scaling_factors['length'])
-                    k_fine = slice(k * self.scaling_factors['length'],
-                                 (k + 1) * self.scaling_factors['length'])
-                    
-                    coarse_data[i, j, k] = np.mean(
-                        field_data[i_fine, j_fine, k_fine])
+                    i_fine = slice(i * scale, (i + 1) * scale)
+                    j_fine = slice(j * scale, (j + 1) * scale)
+                    k_fine = slice(k * scale, (k + 1) * scale)
+                    if field_data.ndim == 3:
+                        coarse_data[i, j, k] = np.mean(
+                            field_data[i_fine, j_fine, k_fine])
+                    else:
+                        for v in range(nvec):
+                            coarse_data[i, j, k, v] = np.mean(
+                                field_data[i_fine, j_fine, k_fine, v])
         
         return coarse_data
     

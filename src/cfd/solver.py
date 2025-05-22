@@ -66,7 +66,7 @@ class CFDSolver:
         x = np.linspace(0, self.domain_size[0], self.grid_resolution[0])
         y = np.linspace(0, self.domain_size[1], self.grid_resolution[1])
         z = np.linspace(0, self.domain_size[2], self.grid_resolution[2])
-        X, Y, Z = np.meshgrid(x, y, z)
+        X, Y, Z = np.meshgrid(x, y, z, indexing='ij')  # Use 'ij' indexing to match array dimensions
         
         # Hydrostatic pressure: p = ρgh
         self.pressure_field = self.fluid_density * 9.81 * (self.domain_size[1] - Y)
@@ -122,12 +122,19 @@ class CFDSolver:
 
     def _interpolate_field(self, position: np.ndarray, field: np.ndarray) -> np.ndarray:
         """Interpolate field values at particle position using trilinear interpolation."""
+        # Ensure position is within domain bounds
+        position = np.clip(position, np.zeros(3), self.domain_size)
+        
         # Convert position to grid indices
         indices = position / self.dx
         
-        # Get surrounding grid points
-        i0, j0, k0 = np.floor(indices).astype(int)
-        i1, j1, k1 = np.ceil(indices).astype(int)
+        # Get surrounding grid points with boundary checking
+        i0 = np.clip(np.floor(indices[0]).astype(int), 0, self.grid_resolution[0]-2)
+        j0 = np.clip(np.floor(indices[1]).astype(int), 0, self.grid_resolution[1]-2)
+        k0 = np.clip(np.floor(indices[2]).astype(int), 0, self.grid_resolution[2]-2)
+        i1 = i0 + 1
+        j1 = j0 + 1
+        k1 = k0 + 1
         
         # Compute interpolation weights
         wx = (indices[0] - i0) / (i1 - i0) if i1 > i0 else 0
@@ -155,16 +162,45 @@ class CFDSolver:
         return c0 * (1 - wx) + c1 * wx
 
     def _compute_velocity_gradients(self) -> np.ndarray:
-        """Compute velocity gradients using central differences."""
+        """Compute velocity gradients using central differences with proper boundary handling."""
         gradients = np.zeros((*self.grid_resolution, 3, 3))
         
-        for i in range(1, self.grid_resolution[0]-1):
-            for j in range(1, self.grid_resolution[1]-1):
-                for k in range(1, self.grid_resolution[2]-1):
-                    # Central differences
-                    du_dx = (self.velocity_field[i+1,j,k] - self.velocity_field[i-1,j,k]) / (2 * self.dx[0])
-                    du_dy = (self.velocity_field[i,j+1,k] - self.velocity_field[i,j-1,k]) / (2 * self.dx[1])
-                    du_dz = (self.velocity_field[i,j,k+1] - self.velocity_field[i,j,k-1]) / (2 * self.dx[2])
+        # Use forward/backward differences at boundaries and central differences in interior
+        for i in range(self.grid_resolution[0]):
+            for j in range(self.grid_resolution[1]):
+                for k in range(self.grid_resolution[2]):
+                    # x-direction
+                    if i == 0:
+                        # Forward difference at left boundary
+                        du_dx = (self.velocity_field[i+1,j,k] - self.velocity_field[i,j,k]) / self.dx[0]
+                    elif i == self.grid_resolution[0]-1:
+                        # Backward difference at right boundary
+                        du_dx = (self.velocity_field[i,j,k] - self.velocity_field[i-1,j,k]) / self.dx[0]
+                    else:
+                        # Central difference in interior
+                        du_dx = (self.velocity_field[i+1,j,k] - self.velocity_field[i-1,j,k]) / (2 * self.dx[0])
+                    
+                    # y-direction
+                    if j == 0:
+                        # Forward difference at bottom boundary
+                        du_dy = (self.velocity_field[i,j+1,k] - self.velocity_field[i,j,k]) / self.dx[1]
+                    elif j == self.grid_resolution[1]-1:
+                        # Backward difference at top boundary
+                        du_dy = (self.velocity_field[i,j,k] - self.velocity_field[i,j-1,k]) / self.dx[1]
+                    else:
+                        # Central difference in interior
+                        du_dy = (self.velocity_field[i,j+1,k] - self.velocity_field[i,j-1,k]) / (2 * self.dx[1])
+                    
+                    # z-direction
+                    if k == 0:
+                        # Forward difference at front boundary
+                        du_dz = (self.velocity_field[i,j,k+1] - self.velocity_field[i,j,k]) / self.dx[2]
+                    elif k == self.grid_resolution[2]-1:
+                        # Backward difference at back boundary
+                        du_dz = (self.velocity_field[i,j,k] - self.velocity_field[i,j,k-1]) / self.dx[2]
+                    else:
+                        # Central difference in interior
+                        du_dz = (self.velocity_field[i,j,k+1] - self.velocity_field[i,j,k-1]) / (2 * self.dx[2])
                     
                     gradients[i,j,k] = np.array([du_dx, du_dy, du_dz])
         
@@ -173,7 +209,7 @@ class CFDSolver:
     def _solve_momentum_equation(self, velocity_gradients: np.ndarray) -> np.ndarray:
         """Solve momentum equation using explicit time integration."""
         # Compute convective term
-        convective = np.einsum('ijkl,ijkl->ijk', velocity_gradients, self.velocity_field)
+        convective = np.einsum('ijklm,ijkm->ijkl', velocity_gradients, self.velocity_field)
         
         # Compute viscous term
         laplacian = self._compute_laplacian(self.velocity_field)
@@ -272,14 +308,44 @@ class CFDSolver:
         """Compute pressure gradient field using central differences."""
         gradient = np.zeros((*self.grid_resolution, 3))
         
-        for i in range(1, self.grid_resolution[0]-1):
-            for j in range(1, self.grid_resolution[1]-1):
-                for k in range(1, self.grid_resolution[2]-1):
-                    gradient[i,j,k] = np.array([
-                        (self.pressure_field[i+1,j,k] - self.pressure_field[i-1,j,k]) / (2 * self.dx[0]),
-                        (self.pressure_field[i,j+1,k] - self.pressure_field[i,j-1,k]) / (2 * self.dx[1]),
-                        (self.pressure_field[i,j,k+1] - self.pressure_field[i,j,k-1]) / (2 * self.dx[2])
-                    ])
+        # Use forward/backward differences at boundaries and central differences in interior
+        for i in range(self.grid_resolution[0]):
+            for j in range(self.grid_resolution[1]):
+                for k in range(self.grid_resolution[2]):
+                    # x-direction
+                    if i == 0:
+                        # Forward difference at left boundary
+                        dx = (self.pressure_field[i+1,j,k] - self.pressure_field[i,j,k]) / self.dx[0]
+                    elif i == self.grid_resolution[0]-1:
+                        # Backward difference at right boundary
+                        dx = (self.pressure_field[i,j,k] - self.pressure_field[i-1,j,k]) / self.dx[0]
+                    else:
+                        # Central difference in interior
+                        dx = (self.pressure_field[i+1,j,k] - self.pressure_field[i-1,j,k]) / (2 * self.dx[0])
+                    
+                    # y-direction
+                    if j == 0:
+                        # Forward difference at bottom boundary
+                        dy = (self.pressure_field[i,j+1,k] - self.pressure_field[i,j,k]) / self.dx[1]
+                    elif j == self.grid_resolution[1]-1:
+                        # Backward difference at top boundary
+                        dy = (self.pressure_field[i,j,k] - self.pressure_field[i,j-1,k]) / self.dx[1]
+                    else:
+                        # Central difference in interior
+                        dy = (self.pressure_field[i,j+1,k] - self.pressure_field[i,j-1,k]) / (2 * self.dx[1])
+                    
+                    # z-direction
+                    if k == 0:
+                        # Forward difference at front boundary
+                        dz = (self.pressure_field[i,j,k+1] - self.pressure_field[i,j,k]) / self.dx[2]
+                    elif k == self.grid_resolution[2]-1:
+                        # Backward difference at back boundary
+                        dz = (self.pressure_field[i,j,k] - self.pressure_field[i,j,k-1]) / self.dx[2]
+                    else:
+                        # Central difference in interior
+                        dz = (self.pressure_field[i,j,k+1] - self.pressure_field[i,j,k-1]) / (2 * self.dx[2])
+                    
+                    gradient[i,j,k] = np.array([dx, dy, dz])
         
         return gradient
 

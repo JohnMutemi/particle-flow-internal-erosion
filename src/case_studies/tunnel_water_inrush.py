@@ -51,22 +51,22 @@ class TunnelWaterInrush:
         length_scale = self.config['simulation']['domain_size'][0] / self.tunnel_length
         diameter_scale = self.config['simulation']['domain_size'][1] / self.tunnel_diameter
         
-        # Set up tunnel walls
+        # Set up tunnel walls with proper boundary checking
         self.tunnel_walls = {
-            'x_min': 0.0,
-            'x_max': self.tunnel_length * length_scale,
-            'y_min': -self.tunnel_diameter/2 * diameter_scale,
-            'y_max': self.tunnel_diameter/2 * diameter_scale,
-            'z_min': -self.tunnel_diameter/2 * diameter_scale,
-            'z_max': self.tunnel_diameter/2 * diameter_scale
+            'x_min': max(0.0, 0.0),
+            'x_max': min(self.tunnel_length * length_scale, self.config['simulation']['domain_size'][0]),
+            'y_min': max(-self.tunnel_diameter/2 * diameter_scale, -self.config['simulation']['domain_size'][1]/2),
+            'y_max': min(self.tunnel_diameter/2 * diameter_scale, self.config['simulation']['domain_size'][1]/2),
+            'z_min': max(-self.tunnel_diameter/2 * diameter_scale, -self.config['simulation']['domain_size'][2]/2),
+            'z_max': min(self.tunnel_diameter/2 * diameter_scale, self.config['simulation']['domain_size'][2]/2)
         }
         
         # Set up tunnel geometry for CFD solver
         tunnel_params = {
-            'length': self.tunnel_length * length_scale,
-            'diameter': self.tunnel_diameter * diameter_scale,
+            'length': min(self.tunnel_length * length_scale, self.config['simulation']['domain_size'][0]),
+            'diameter': min(self.tunnel_diameter * diameter_scale, min(self.config['simulation']['domain_size'][1:])),
             'center': np.array([
-                self.tunnel_length * length_scale / 2,
+                min(self.tunnel_length * length_scale / 2, self.config['simulation']['domain_size'][0] / 2),
                 0.0,
                 0.0
             ]),
@@ -83,7 +83,7 @@ class TunnelWaterInrush:
             'outlet': {
                 'type': 'pressure',
                 'value': 0.0,
-                'position': self.tunnel_length * length_scale
+                'position': min(self.tunnel_length * length_scale, self.config['simulation']['domain_size'][0])
             },
             'walls': {
                 'type': 'no-slip',
@@ -141,21 +141,33 @@ class TunnelWaterInrush:
         num_particles = self.config['simulation']['initial_particles']
         particles = []
         
+        # Get scaling factors
+        length_scale = self.config['simulation']['domain_size'][0] / self.tunnel_length
+        diameter_scale = self.config['simulation']['domain_size'][1] / self.tunnel_diameter
+        
         for _ in range(num_particles):
-            # Random position within tunnel
-            r = np.random.uniform(0, self.tunnel_diameter/2)
+            # Random position within tunnel in real-world coordinates
+            r = np.random.uniform(0, min(self.tunnel_diameter/2, self.config['simulation']['domain_size'][1]/2))
             theta = np.random.uniform(0, 2*np.pi)
-            x = np.random.uniform(0, self.tunnel_length)
+            x = np.random.uniform(0, min(self.tunnel_length, self.config['simulation']['domain_size'][0]))
             
             # Convert to Cartesian coordinates
             y = r * np.cos(theta)
             z = r * np.sin(theta)
             
-            # Add particle
+            # Scale to simulation domain
+            position = np.array([
+                x * length_scale,
+                y * diameter_scale,
+                z * diameter_scale
+            ])
+            
+            # Add particle with boundary checking
             particles.append({
-                'position': np.array([x, y, z]),
+                'position': position,
                 'velocity': np.zeros(3),
-                'radius': self.config['dem']['particle_radius'],
+                'radius': min(self.config['dem']['particle_radius'], 
+                            min(self.tunnel_diameter/4, min(self.config['simulation']['domain_size'][1:])/4)),
                 'density': self.config['dem']['particle_density']
             })
         
@@ -169,28 +181,32 @@ class TunnelWaterInrush:
         logger.info(f"Starting simulation for {num_steps} steps")
         
         for step in range(num_steps):
-            # Update fluid state
-            self.coupling.cfd_solver.update_fluid_state()
-            
-            # Compute fluid forces on particles
-            fluid_forces = self.coupling.cfd_solver.compute_fluid_forces(
-                [p['position'] for p in self.coupling.dem_solver.particles]
-            )
-            
-            # Update particle states
-            self.coupling.dem_solver.update_particle_states(fluid_forces)
-            
-            # Update erosion
-            self._update_erosion()
-            
-            # Update visualization
-            self._update_visualization(step)
-            
-            # Store statistics
-            self._store_statistics(step)
-            
-            if step % 100 == 0:
-                logger.info(f"Completed step {step}/{num_steps}")
+            try:
+                # Update fluid state
+                self.coupling.cfd_solver.update_fluid_state()
+                
+                # Compute fluid forces on particles
+                fluid_forces = self.coupling.cfd_solver.compute_fluid_forces(
+                    [p['position'] for p in self.coupling.dem_solver.particles]
+                )
+                
+                # Update particle states
+                self.coupling.dem_solver.update_particle_states(fluid_forces)
+                
+                # Update erosion
+                self._update_erosion()
+                
+                # Update visualization
+                self._update_visualization(step)
+                
+                # Store statistics
+                self._store_statistics(step)
+                
+                if step % 100 == 0:
+                    logger.info(f"Completed step {step}/{num_steps}")
+            except Exception as e:
+                logger.error(f"Error during simulation step {step}: {e}")
+                continue
 
     def _update_erosion(self):
         """Update erosion state based on fluid forces and particle properties."""
@@ -201,19 +217,35 @@ class TunnelWaterInrush:
         
         # Update erosion for each particle
         for particle in self.coupling.dem_solver.particles:
+            # Check if particle position is within bounds
+            if not self._is_position_in_bounds(particle['position']):
+                continue
+                
             # Interpolate fluid properties at particle position
-            velocity = self.coupling.cfd_solver._interpolate_field(
-                particle['position'], velocity_field
-            )
-            pressure = self.coupling.cfd_solver._interpolate_field(
-                particle['position'], pressure_field
-            )
-            
-            # Compute shear stress
-            shear_stress = self._compute_shear_stress(velocity, particle['radius'])
-            
-            # Update particle erosion state
-            self._update_particle_erosion(particle, shear_stress)
+            try:
+                velocity = self.coupling.cfd_solver._interpolate_field(
+                    particle['position'], velocity_field
+                )
+                pressure = self.coupling.cfd_solver._interpolate_field(
+                    particle['position'], pressure_field
+                )
+                
+                # Compute shear stress
+                shear_stress = self._compute_shear_stress(velocity, particle['radius'])
+                
+                # Update particle erosion state
+                self._update_particle_erosion(particle, shear_stress)
+            except IndexError as e:
+                logger.warning(f"Index error during interpolation: {e}")
+                continue
+
+    def _is_position_in_bounds(self, position: np.ndarray) -> bool:
+        """Check if a position is within the simulation domain bounds."""
+        return (
+            self.tunnel_walls['x_min'] <= position[0] <= self.tunnel_walls['x_max'] and
+            self.tunnel_walls['y_min'] <= position[1] <= self.tunnel_walls['y_max'] and
+            self.tunnel_walls['z_min'] <= position[2] <= self.tunnel_walls['z_max']
+        )
 
     def _compute_shear_stress(self, velocity: np.ndarray, particle_radius: float) -> float:
         """Compute shear stress on particle surface."""
@@ -238,69 +270,83 @@ class TunnelWaterInrush:
             # Compute erosion rate
             erosion = erosion_rate * (shear_stress - critical_shear_stress)
             
-            # Update particle properties
-            particle['radius'] *= (1 - erosion)
-            if particle['radius'] < 0.1 * self.config['dem']['particle_radius']:
+            # Update particle properties with boundary checking
+            new_radius = particle['radius'] * (1 - erosion)
+            if new_radius >= 0.1 * self.config['dem']['particle_radius']:
+                particle['radius'] = new_radius
+            else:
                 particle['eroded'] = True
 
     def _update_visualization(self, step: int):
         """Update visualization with current simulation state."""
         if step % self.config['output']['visualization_interval'] == 0:
-            # Get current particle positions
-            particle_positions = [p['position'] for p in self.coupling.dem_solver.particles]
-            
-            # Get current fluid velocity
-            fluid_data = self.coupling.cfd_solver.get_fluid_data()
-            fluid_velocity = fluid_data['velocity_field']
-            
-            # Update visualization
-            self.visualizer.update_data(
-                particle_positions=particle_positions,
-                fluid_velocity=fluid_velocity,
-                time_step=step * self.config['simulation']['time_step']
-            )
+            try:
+                # Get current particle positions
+                particle_positions = [p['position'] for p in self.coupling.dem_solver.particles]
+                
+                # Get current fluid velocity
+                fluid_data = self.coupling.cfd_solver.get_fluid_data()
+                fluid_velocity = fluid_data['velocity_field']
+                
+                # Update visualization
+                self.visualizer.update_data(
+                    particle_positions=particle_positions,
+                    fluid_velocity=fluid_velocity,
+                    time_step=step * self.config['simulation']['time_step']
+                )
+            except Exception as e:
+                logger.warning(f"Error during visualization update: {e}")
 
     def _store_statistics(self, step: int):
         """Store simulation statistics."""
-        # Store time step
-        self.time_steps.append(step * self.config['simulation']['time_step'])
-        
-        # Compute erosion statistics
-        eroded_particles = sum(1 for p in self.coupling.dem_solver.particles if p.get('eroded', False))
-        self.erosion_stats.append(eroded_particles)
-        
-        # Compute bond health statistics
-        if hasattr(self.coupling, 'bond_model'):
-            bond_health = self.coupling.bond_model.get_bond_health()
-            self.bond_health_stats.append(bond_health)
-        
-        # Store particle data
-        self.particle_data.append([p['position'] for p in self.coupling.dem_solver.particles])
-        
-        # Store fluid data
-        fluid_data = self.coupling.cfd_solver.get_fluid_data()
-        self.fluid_data.append(fluid_data)
+        try:
+            # Store time step
+            self.time_steps.append(step * self.config['simulation']['time_step'])
+            
+            # Compute erosion statistics
+            eroded_particles = sum(1 for p in self.coupling.dem_solver.particles if p.get('eroded', False))
+            self.erosion_stats.append(eroded_particles)
+            
+            # Compute bond health statistics
+            if hasattr(self.coupling, 'bond_model'):
+                bond_health = self.coupling.bond_model.get_bond_health()
+                self.bond_health_stats.append(bond_health)
+            
+            # Store particle data
+            self.particle_data.append([p['position'] for p in self.coupling.dem_solver.particles])
+            
+            # Store fluid data
+            fluid_data = self.coupling.cfd_solver.get_fluid_data()
+            self.fluid_data.append(fluid_data)
+        except Exception as e:
+            logger.warning(f"Error during statistics storage: {e}")
 
     def save_results(self, filename: str = None):
         """Save simulation results."""
         if filename is None:
             filename = f"tunnel_water_inrush_{len(self.time_steps)}.npz"
         
-        np.savez(
-            filename,
-            time_steps=np.array(self.time_steps),
-            erosion_stats=np.array(self.erosion_stats),
-            bond_health_stats=np.array(self.bond_health_stats),
-            particle_data=np.array(self.particle_data),
-            fluid_data=np.array(self.fluid_data)
-        )
-        
-        logger.info(f"Results saved to {filename}")
-        
-        # Save visualization
-        self.visualizer.save_animation()
+        try:
+            np.savez(
+                filename,
+                time_steps=np.array(self.time_steps),
+                erosion_stats=np.array(self.erosion_stats),
+                bond_health_stats=np.array(self.bond_health_stats),
+                particle_data=np.array(self.particle_data),
+                fluid_data=np.array(self.fluid_data)
+            )
+            
+            logger.info(f"Results saved to {filename}")
+            
+            # Save visualization
+            self.visualizer.save_animation()
+        except Exception as e:
+            logger.error(f"Error saving results: {e}")
 
     def close(self):
         """Clean up resources."""
-        self.visualizer.close()
-        logger.info("Resources cleaned up") 
+        try:
+            self.visualizer.close()
+            logger.info("Resources cleaned up")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}") 

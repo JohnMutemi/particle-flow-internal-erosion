@@ -80,13 +80,13 @@ class CouplingManager:
         forces['drag'] = self._compute_drag_forces(
             positions, velocities, fluid_props, radii)
         
-        # Compute pressure forces
+        # Compute pressure forces (pass full 3D field)
         forces['pressure'] = self._compute_pressure_forces(
-            positions, fluid_props, radii)
+            positions, fluid_props, radii, fluid_pressure_field=fluid_pressure)
         
-        # Compute lift forces
+        # Compute lift forces (pass full 3D velocity field)
         forces['lift'] = self._compute_lift_forces(
-            positions, velocities, fluid_props, radii)
+            positions, velocities, fluid_props, radii, fluid_velocity_field=fluid_velocity)
         
         # Compute virtual mass forces
         forces['virtual_mass'] = self._compute_virtual_mass_forces(
@@ -168,7 +168,7 @@ class CouplingManager:
         cd = self._compute_drag_coefficients(re)
         
         # Compute drag forces
-        drag_forces = -0.5 * cd[:, np.newaxis] * fluid_props['density'] * \
+        drag_forces = -0.5 * cd[:, np.newaxis] * fluid_props['density'][:, np.newaxis] * \
                      np.pi * radii[:, np.newaxis]**2 * \
                      rel_vel_magnitudes[:, np.newaxis] * rel_velocities
         
@@ -202,20 +202,23 @@ class CouplingManager:
     
     def _compute_pressure_forces(self, positions: np.ndarray,
                                fluid_props: Dict,
-                               radii: np.ndarray) -> np.ndarray:
+                               radii: np.ndarray, fluid_pressure_field=None) -> np.ndarray:
         """Compute pressure forces on particles.
         
         Args:
             positions: Particle positions
             fluid_props: Interpolated fluid properties
             radii: Particle radii
-            
+            fluid_pressure_field: Full 3D pressure field (optional, for gradient calculation)
+        
         Returns:
             Array of pressure forces
         """
         # Compute pressure gradients
+        if fluid_pressure_field is None:
+            raise ValueError("Full 3D pressure field must be provided for gradient calculation.")
         pressure_gradients = self._compute_pressure_gradients(
-            positions, fluid_props['pressure'])
+            positions, fluid_pressure_field)
         
         # Compute pressure forces
         pressure_forces = -np.pi * radii[:, np.newaxis]**3 * pressure_gradients
@@ -228,8 +231,8 @@ class CouplingManager:
         
         Args:
             positions: Particle positions
-            pressure: Interpolated pressure field
-            
+            pressure: Full 3D pressure field
+        
         Returns:
             Array of pressure gradients
         """
@@ -237,38 +240,27 @@ class CouplingManager:
         x = np.arange(pressure.shape[0])
         y = np.arange(pressure.shape[1])
         z = np.arange(pressure.shape[2])
-        
         interp_pressure = interpolate.RegularGridInterpolator(
             (x, y, z), pressure,
             method='linear', bounds_error=False, fill_value=0.0)
         
-        # Compute gradients using finite differences
         dx = 1.0
         dy = 1.0
         dz = 1.0
-        
-        positions_dx = positions.copy()
-        positions_dx[:, 0] += dx
-        positions_dy = positions.copy()
-        positions_dy[:, 1] += dy
-        positions_dz = positions.copy()
-        positions_dz[:, 2] += dz
-        
-        p_dx = interp_pressure(positions_dx)
-        p_dy = interp_pressure(positions_dy)
-        p_dz = interp_pressure(positions_dz)
-        
         gradients = np.zeros_like(positions)
-        gradients[:, 0] = (p_dx - pressure) / dx
-        gradients[:, 1] = (p_dy - pressure) / dy
-        gradients[:, 2] = (p_dz - pressure) / dz
-        
+        p_orig = interp_pressure(positions)
+        # For each direction, shift positions and interpolate
+        for i, delta in enumerate([(dx,0,0), (0,dy,0), (0,0,dz)]):
+            shifted = positions + np.array(delta)
+            p_shifted = interp_pressure(shifted)
+            gradients[:, i] = (p_shifted - p_orig) / [dx, dy, dz][i]
         return gradients
     
     def _compute_lift_forces(self, positions: np.ndarray,
                            velocities: np.ndarray,
                            fluid_props: Dict,
-                           radii: np.ndarray) -> np.ndarray:
+                           radii: np.ndarray,
+                           fluid_velocity_field=None) -> np.ndarray:
         """Compute lift forces on particles.
         
         Args:
@@ -276,23 +268,29 @@ class CouplingManager:
             velocities: Particle velocities
             fluid_props: Interpolated fluid properties
             radii: Particle radii
-            
+            fluid_velocity_field: Full 3D velocity field
+        
         Returns:
             Array of lift forces
         """
+        if fluid_velocity_field is None:
+            raise ValueError("Full 3D velocity field must be provided for vorticity calculation.")
+        vorticity_field = self._compute_vorticity(fluid_velocity_field)
+        # Interpolate vorticity at particle positions
+        x = np.arange(vorticity_field.shape[0])
+        y = np.arange(vorticity_field.shape[1])
+        z = np.arange(vorticity_field.shape[2])
+        interp_vorticity = interpolate.RegularGridInterpolator(
+            (x, y, z), vorticity_field,
+            method='linear', bounds_error=False, fill_value=0.0)
+        vorticity_at_particles = interp_vorticity(positions)
+        
         # Get relative velocities
         rel_velocities = velocities - fluid_props['velocity']
         rel_vel_magnitudes = np.linalg.norm(rel_velocities, axis=1)
         
-        # Compute vorticity
-        vorticity = self._compute_vorticity(fluid_props['velocity'])
-        
         # Compute lift forces (Saffman lift)
-        lift_forces = 1.61 * fluid_props['viscosity'] * \
-                     np.sqrt(fluid_props['density'] / fluid_props['viscosity']) * \
-                     radii[:, np.newaxis]**2 * \
-                     np.cross(rel_velocities, vorticity)
-        
+        lift_forces = 0.5 * fluid_props['density'][:, np.newaxis] * rel_vel_magnitudes[:, np.newaxis] * np.cross(rel_velocities, vorticity_at_particles)
         return lift_forces
     
     def _compute_vorticity(self, velocity: np.ndarray) -> np.ndarray:
@@ -340,18 +338,14 @@ class CouplingManager:
         Returns:
             Array of virtual mass forces
         """
-        # Compute fluid acceleration
-        fluid_acceleration = self._compute_fluid_acceleration(
-            fluid_props['velocity'])
-        
-        # Compute particle acceleration
-        particle_acceleration = self._compute_particle_acceleration(velocities)
-        
+        # Compute accelerations
+        fluid_acc = self._compute_fluid_acceleration(fluid_props['velocity'])
+        particle_acc = self._compute_particle_acceleration(velocities)
+        # Broadcast density for vector operations
+        density = fluid_props['density'][:, np.newaxis]
         # Compute virtual mass forces
-        virtual_mass_forces = 0.5 * fluid_props['density'] * \
-                            (4/3) * np.pi * radii[:, np.newaxis]**3 * \
-                            (fluid_acceleration - particle_acceleration)
-        
+        virtual_mass_forces = 0.5 * density * \
+                             (fluid_acc - particle_acc)
         return virtual_mass_forces
     
     def _compute_fluid_acceleration(self, velocity: np.ndarray) -> np.ndarray:

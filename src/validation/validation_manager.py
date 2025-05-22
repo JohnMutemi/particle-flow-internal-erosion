@@ -151,19 +151,19 @@ class ValidationManager:
         Returns:
             Dictionary of erosion statistics
         """
-        stats = {}
+        result = {}
         
         # Basic statistics
-        stats['mean'] = np.mean(erosion_rate)
-        stats['std'] = np.std(erosion_rate)
-        stats['max'] = np.max(erosion_rate)
-        stats['min'] = np.min(erosion_rate)
+        result['mean'] = np.mean(erosion_rate)
+        result['std'] = np.std(erosion_rate)
+        result['max'] = np.max(erosion_rate)
+        result['min'] = np.min(erosion_rate)
         
         # Distribution statistics
-        stats['skewness'] = stats.skew(erosion_rate)
-        stats['kurtosis'] = stats.kurtosis(erosion_rate)
+        result['skewness'] = stats.skew(erosion_rate)
+        result['kurtosis'] = stats.kurtosis(erosion_rate)
         
-        return stats
+        return result
     
     def _analyze_particle_statistics(self, particle_data: Dict) -> Dict:
         """Analyze particle statistics.
@@ -174,12 +174,12 @@ class ValidationManager:
         Returns:
             Dictionary of particle statistics
         """
-        stats = {}
+        result = {}
         
         # Analyze positions
         if 'positions' in particle_data:
             positions = particle_data['positions']
-            stats['position'] = {
+            result['position'] = {
                 'mean': np.mean(positions, axis=0),
                 'std': np.std(positions, axis=0),
                 'distribution': self._analyze_distribution(positions)
@@ -188,7 +188,7 @@ class ValidationManager:
         # Analyze velocities
         if 'velocities' in particle_data:
             velocities = particle_data['velocities']
-            stats['velocity'] = {
+            result['velocity'] = {
                 'mean': np.mean(velocities, axis=0),
                 'std': np.std(velocities, axis=0),
                 'distribution': self._analyze_distribution(velocities)
@@ -197,13 +197,13 @@ class ValidationManager:
         # Analyze forces
         if 'forces' in particle_data:
             forces = particle_data['forces']
-            stats['force'] = {
+            result['force'] = {
                 'mean': np.mean(forces, axis=0),
                 'std': np.std(forces, axis=0),
                 'distribution': self._analyze_distribution(forces)
             }
         
-        return stats
+        return result
     
     def _analyze_fluid_statistics(self, fluid_fields: Dict) -> Dict:
         """Analyze fluid field statistics.
@@ -214,12 +214,12 @@ class ValidationManager:
         Returns:
             Dictionary of fluid statistics
         """
-        stats = {}
+        result = {}
         
         # Analyze velocity field
         if 'velocity' in fluid_fields:
             velocity = fluid_fields['velocity']
-            stats['velocity'] = {
+            result['velocity'] = {
                 'mean': np.mean(velocity, axis=(0, 1, 2)),
                 'std': np.std(velocity, axis=(0, 1, 2)),
                 'max': np.max(velocity, axis=(0, 1, 2)),
@@ -229,14 +229,14 @@ class ValidationManager:
         # Analyze pressure field
         if 'pressure' in fluid_fields:
             pressure = fluid_fields['pressure']
-            stats['pressure'] = {
+            result['pressure'] = {
                 'mean': np.mean(pressure),
                 'std': np.std(pressure),
                 'max': np.max(pressure),
                 'min': np.min(pressure)
             }
         
-        return stats
+        return result
     
     def _analyze_distribution(self, data: np.ndarray) -> Dict:
         """Analyze data distribution.
@@ -376,7 +376,14 @@ class ValidationManager:
         # Compute main effect for each metric
         for metric in results_values[0].keys():
             values = [r[metric] for r in results_values]
-            main_effect[metric] = np.polyfit(param_values, values, 1)[0]
+            # If the value is a dict, compute for each submetric
+            if isinstance(values[0], dict):
+                main_effect[metric] = {}
+                for submetric in values[0].keys():
+                    subvalues = [v[submetric] for v in values]
+                    main_effect[metric][submetric] = np.polyfit(param_values, subvalues, 1)[0]
+            else:
+                main_effect[metric] = np.polyfit(param_values, values, 1)[0]
         
         return main_effect
     
@@ -396,7 +403,14 @@ class ValidationManager:
         # Compute interaction for each metric
         for metric in results_values[0].keys():
             values = [r[metric] for r in results_values]
-            interaction[metric] = np.polyfit(param_values, values, 2)[0]
+            # If the value is a dict, compute for each submetric
+            if isinstance(values[0], dict):
+                interaction[metric] = {}
+                for submetric in values[0].keys():
+                    subvalues = [v[submetric] for v in values]
+                    interaction[metric][submetric] = np.polyfit(param_values, subvalues, 2)[0]
+            else:
+                interaction[metric] = np.polyfit(param_values, values, 2)[0]
         
         return interaction
     
@@ -444,15 +458,23 @@ class ValidationManager:
         Args:
             statistics: Dictionary containing statistical analysis results
         """
+        import numbers
         for category, stats in statistics.items():
             plt.figure(figsize=(10, 6))
-            
+            # Flatten stats dict
+            flat_stats = {}
+            for k, v in stats.items():
+                if isinstance(v, dict):
+                    for subk, subv in v.items():
+                        if isinstance(subv, (int, float, np.generic)):
+                            flat_stats[f"{k}_{subk}"] = subv
+                elif isinstance(v, (int, float, np.generic)):
+                    flat_stats[k] = v
             # Plot statistics
-            plt.bar(stats.keys(), stats.values())
+            plt.bar(flat_stats.keys(), flat_stats.values())
             plt.title(f'Statistics for {category}')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            
             # Save plot
             plt.savefig(self.output_dir / f'statistics_{category}.png')
             plt.close()
@@ -463,16 +485,23 @@ class ValidationManager:
         Args:
             sensitivity: Dictionary containing sensitivity analysis results
         """
+        import numbers
         for parameter, results in sensitivity.items():
             plt.figure(figsize=(10, 6))
-            
+            # Flatten main_effect dict
+            flat_main = {}
+            for k, v in results['main_effect'].items():
+                if isinstance(v, dict):
+                    for subk, subv in v.items():
+                        if isinstance(subv, (int, float, np.generic)):
+                            flat_main[f"{k}_{subk}"] = subv
+                elif isinstance(v, (int, float, np.generic)):
+                    flat_main[k] = v
             # Plot main effects
-            plt.bar(results['main_effect'].keys(),
-                   results['main_effect'].values())
+            plt.bar(flat_main.keys(), flat_main.values())
             plt.title(f'Main Effects for {parameter}')
             plt.xticks(rotation=45)
             plt.tight_layout()
-            
             # Save plot
             plt.savefig(self.output_dir / f'sensitivity_{parameter}.png')
             plt.close()
