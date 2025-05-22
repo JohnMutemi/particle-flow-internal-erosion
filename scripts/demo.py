@@ -280,7 +280,6 @@ def main():
     
     print("\nDemonstration Complete!")
     print("Results have been saved to the 'results' directory")
-    print("\nNote: Tunnel water inrush demonstration was skipped due to ongoing optimization.")
 
 if __name__ == "__main__":
     main() 
