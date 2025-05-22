@@ -1,279 +1,324 @@
-# Simulation configuration for DEM-based Internal Erosion Model
-simulation:
-  time_steps: 1000
-  output_interval: 100
-  domain_size: [100.0, 50.0, 50.0]  # [x, y, z] in meters
-  grid_resolution: [101, 51, 51]    # [nx, ny, nz] - ensuring odd number of points for proper gradient computation
-  time_step: 0.001                  # seconds
-  total_time: 10.0                  # seconds
-  initial_particles: 1000           # number of particles
-  gravity: [0.0, -9.81, 0.0]
-
-dem:
-  particle_radius: 0.01            # meters
-  particle_density: 2650.0         # kg/m^3
-  youngs_modulus: 1e9
-  poisson_ratio: 0.3
-  friction_coefficient: 0.5
-  restitution_coefficient: 0.7
-  bond_strength: 1.0e6             # Pa
-  bond_radius: 0.015  # meters
-  damping_coefficient: 0.1
-
-cfd:
-  fluid_density: 1000.0            # kg/m^3
-  fluid_viscosity: 0.001           # Pa·s
-  pressure_solver:
-    max_iterations: 1000
-    tolerance: 1e-6
-  velocity_solver:
-    max_iterations: 1000
-    tolerance: 1e-6
-  pressure_gradient: [1.0, 0.0, 0.0]  # Pa/m
-  boundary_conditions:
-    type: "no-slip"
-    velocity: [0.0, 0.0, 0.0]
-  turbulence_model: "k-epsilon"     # turbulence model
-  wall_roughness: 0.001            # meters
-
-erosion:
-  critical_shear_stress: 1.0       # Pa
-  erosion_rate_coefficient: 1.0e-6 # m^3/(N·s)
-  transport_capacity: 1.0
-  deposition_rate: 0.1
-  particle_removal_threshold: 0.1  # fraction of original radius
-  particle_detachment_threshold: 0.1 # N
-  bond_degradation_rate: 0.1       # 1/s
-
-output:
-  directory: "results"
-  save_particles: true
-  save_fluid: true
-  visualization_interval: 10
-  save_interval: 0.1               # seconds
-  format: "numpy"
-  visualization:
-    enabled: true
-    interval: 0.5                  # seconds
-    format: "png"
-    variables: ["velocity", "pressure", "erosion_rate"]
-
-# Case study configuration
-case_study:
-  tunnel:
-    length: 50.0                   # meters
-    diameter: 5.0                  # meters
-    center: [50.0, 25.0, 25.0]     # [x, y, z] in meters
-  water_pressure:
-    inlet: 1.0e6                   # Pa
-    outlet: 1.0e5                  # Pa
-  mud_concentration: 0.1           # volume fraction
-
-# Validation configuration
-validation:
-  experimental_data_file: "data/experimental_data.npz"
-  variables_to_compare:
-    - "erosion_rate"
-    - "pressure"
-    - "velocity"
-  statistics:
-    compute_basic: true
-    compute_distribution: true
-    compute_correlation: true
-  sensitivity_analysis:
-    parameter_ranges:
-      bond_strength: [0.5e6, 2.0e6]
-      critical_shear_stress: [0.5, 2.0]
-      erosion_rate_coefficient: [0.5e-6, 2.0e-6]
-    num_samples: 10
-    compute_interactions: true
-
-# Calibration configuration
 calibration:
-  parameters:
-    fluid_density:
-      bounds: [900.0, 1100.0]
-      initial_value: 1000.0
-      distribution: "normal"
-      scale: 50.0
-    fluid_viscosity:
-      bounds: [0.0005, 0.002]
-      initial_value: 0.001
-      distribution: "normal"
-      scale: 0.0002
-    particle_radius:
-      bounds: [0.005, 0.02]
-      initial_value: 0.01
-      distribution: "uniform"
-    bond_strength:
-      bounds: [5e5, 2e6]
-      initial_value: 1e6
-      distribution: "normal"
-      scale: 2e5
-  optimization:
-    method: "differential_evolution"
-    max_iterations: 100
-    population_size: 20
-    mutation_rate: 0.5
-    recombination_rate: 0.7
   bayesian:
     n_samples: 1000
     noise_scale: 1.0
     proposal_scale: 0.1
-
-# Experimental configuration
+  optimization:
+    max_iterations: 100
+    method: differential_evolution
+    mutation_rate: 0.5
+    population_size: 20
+    recombination_rate: 0.7
+  parameters:
+    bond_strength:
+      bounds:
+      - 5e5
+      - 2e6
+      distribution: normal
+      initial_value: 1e6
+      scale: 2e5
+    fluid_density:
+      bounds:
+      - 900.0
+      - 1100.0
+      distribution: normal
+      initial_value: 1000.0
+      scale: 50.0
+    fluid_viscosity:
+      bounds:
+      - 0.0005
+      - 0.002
+      distribution: normal
+      initial_value: 0.001
+      scale: 0.0002
+    particle_radius:
+      bounds:
+      - 0.005
+      - 0.02
+      distribution: uniform
+      initial_value: 0.01
+case_study:
+  mud_concentration: 0.1
+  tunnel:
+    center:
+    - 50.0
+    - 25.0
+    - 25.0
+    diameter: 5.0
+    length: 50.0
+  water_pressure:
+    inlet: 1.0e6
+    outlet: 1.0e5
+cfd:
+  boundary_conditions:
+    type: no-slip
+    velocity:
+    - 0.0
+    - 0.0
+    - 0.0
+  fluid_density: 950.0
+  fluid_viscosity: 0.001
+  pressure_gradient:
+  - 1.0
+  - 0.0
+  - 0.0
+  pressure_solver:
+    max_iterations: 1000
+    tolerance: 1e-6
+  turbulence_model: k-epsilon
+  velocity_solver:
+    max_iterations: 1000
+    tolerance: 1e-6
+  wall_roughness: 0.001
+coarse_grained:
+  calibration_file: data/calibrated_params.json
+  clustering:
+    distance_threshold: 0.1
+    method: hierarchical
+  force_scale: 8.0
+  length_scale: 10.0
+  mapping:
+    interpolation_order: 1
+    smoothing: true
+  time_scale: 5.0
+coupling:
+  critical_force: 1.0
+  drag_model: schiller_naumann
+  force_coupling: true
+  heat_coupling: false
+  interpolation_order: 1
+  interval: 1
+  lift_model: saffman
+  mass_coupling: false
+  virtual_mass: true
+dem:
+  bond_radius: 0.015
+  bond_strength: 1400000.0
+  damping_coefficient: 0.1
+  friction_coefficient: 0.5
+  particle_density: 2650.0
+  particle_radius: 0.012
+  poisson_ratio: 0.3
+  restitution_coefficient: 0.7
+  youngs_modulus: 1e9
+erosion:
+  bond_degradation_rate: 0.1
+  critical_shear_stress: 1.0
+  deposition_rate: 0.1
+  erosion_rate_coefficient: 1.0e-06
+  particle_detachment_threshold: 0.1
+  particle_removal_threshold: 0.1
+  transport_capacity: 1.0
 experimental:
-  sampling_rate: 100  # Hz
-  pressure_points: 5
-  velocity_points: 3
-  erosion_points: 4
-  measurement_duration: 10.0  # seconds
-  sensor_noise:
-    pressure: 0.01  # 1% of base pressure
-    velocity: 0.05  # 5% of base velocity
-    erosion: 0.10  # 10% of base erosion rate
   data_processing:
-    filter_type: "butterworth"
+    cutoff_frequency: 10.0
     filter_order: 4
-    cutoff_frequency: 10.0  # Hz
+    filter_type: butterworth
+  erosion_points: 4
+  measurement_duration: 10.0
   output:
-    directory: "results/experimental"
-    save_raw_data: true
-    save_processed_data: true
+    data_format: numpy
+    directory: results/experimental
+    plot_format: png
     save_plots: true
-    plot_format: "png"
-    data_format: "numpy"
-
-# Parallel processing configuration
-parallel:
-  num_ranks: 8
-  max_amr_level: 3
-  refinement_threshold: 0.1
-  coarsening_threshold: 0.01
-  amr_buffer_cells: 2
-  load_balancing:
-    method: "dynamic"
-    interval: 100
-    threshold: 0.1
-  communication:
-    buffer_size: 1024
-    async_communication: true
-  output:
-    directory: "results/parallel"
-    save_decomposition: true
-    save_amr_grid: true
-    save_performance: true
-    performance_metrics:
-      - wall_time
-      - cpu_time
-      - memory_usage
-      - communication_time
-      - load_balance
-    save_metrics: true
-
-# Mitigation configuration
+    save_processed_data: true
+    save_raw_data: true
+  pressure_points: 5
+  sampling_rate: 100
+  sensor_noise:
+    erosion: 0.1
+    pressure: 0.01
+    velocity: 0.05
+  velocity_points: 3
 mitigation:
-  strategies:
-    - name: "grouting"
-      type: "grouting"
-      parameters:
-        permeability_reduction: 0.1
-        strength_increase: 2e6  # Pa
-        porosity_reduction: 0.3
-        implementation_time: 7  # days
-      cost_model:
-        material_cost: 1000  # $/m³
-        labor_cost: 500  # $/day
-        equipment_cost: 50000  # $
-        maintenance_cost: 1000  # $/year
-      effectiveness_model:
-        base_pressure: 1e6  # Pa
-        base_flow: 1.0  # m³/s
-        target_stability: 1.5
-        pressure_weight: 0.4
-        flow_weight: 0.3
-        stability_weight: 0.3
-    
-    - name: "drainage"
-      type: "drainage"
-      parameters:
-        channel_positions: [[0, 0, 0], [20, 0, 0], [40, 0, 0], [60, 0, 0]]
-        pressure_reduction: 0.5
-        flow_reduction: 0.6
-        implementation_time: 5  # days
-      cost_model:
-        material_cost: 500  # $/m
-        labor_cost: 300  # $/day
-        equipment_cost: 30000  # $
-        maintenance_cost: 500  # $/year
-      effectiveness_model:
-        base_pressure: 1e6  # Pa
-        base_flow: 1.0  # m³/s
-        target_stability: 1.2
-        pressure_weight: 0.5
-        flow_weight: 0.4
-        stability_weight: 0.1
-    
-    - name: "support"
-      type: "support"
-      parameters:
-        element_positions: [[0, 0, 0], [10, 0, 0], [20, 0, 0], [30, 0, 0],
-                           [40, 0, 0], [50, 0, 0], [60, 0, 0], [70, 0, 0]]
-        stress_reduction: 0.7
-        deformation_reduction: 0.8
-        implementation_time: 10  # days
-      cost_model:
-        material_cost: 2000  # $/element
-        labor_cost: 400  # $/day
-        equipment_cost: 40000  # $
-        maintenance_cost: 2000  # $/year
-      effectiveness_model:
-        base_pressure: 1e6  # Pa
-        base_flow: 1.0  # m³/s
-        target_stability: 1.8
-        pressure_weight: 0.2
-        flow_weight: 0.2
-        stability_weight: 0.6
-  
   optimization:
     constraints:
-      max_cost: 1000000  # $
+      max_cost: 1000000
+      max_time: 14
       min_effectiveness: 0.7
-      max_time: 14  # days
     weights:
       cost_weight: 0.4
       effectiveness_weight: 0.4
       time_weight: 0.2
-  
   output:
-    directory: "results/mitigation"
-    save_strategy_results: true
+    data_format: json
+    directory: results/mitigation
+    plot_format: png
     save_optimization_results: true
     save_plots: true
-    plot_format: "png"
-    data_format: "json"
-
-# Coarse-grained configuration
-coarse_grained:
-  length_scale: 10.0
-  time_scale: 5.0
-  force_scale: 8.0
-  calibration_file: "data/calibrated_params.json"
-  clustering:
-    method: "hierarchical"
-    distance_threshold: 0.1
-  mapping:
-    interpolation_order: 1
-    smoothing: true
-
-# Coupling configuration
-coupling:
-  interval: 1
-  interpolation_order: 1
-  force_coupling: true
-  heat_coupling: false
-  mass_coupling: false
-  critical_force: 1.0
-  drag_model: "schiller_naumann"
-  lift_model: "saffman"
-  virtual_mass: true
+    save_strategy_results: true
+  strategies:
+  - cost_model:
+      equipment_cost: 50000
+      labor_cost: 500
+      maintenance_cost: 1000
+      material_cost: 1000
+    effectiveness_model:
+      base_flow: 1.0
+      base_pressure: 1e6
+      flow_weight: 0.3
+      pressure_weight: 0.4
+      stability_weight: 0.3
+      target_stability: 1.5
+    name: grouting
+    parameters:
+      implementation_time: 7
+      permeability_reduction: 0.1
+      porosity_reduction: 0.3
+      strength_increase: 2e6
+    type: grouting
+  - cost_model:
+      equipment_cost: 30000
+      labor_cost: 300
+      maintenance_cost: 500
+      material_cost: 500
+    effectiveness_model:
+      base_flow: 1.0
+      base_pressure: 1e6
+      flow_weight: 0.4
+      pressure_weight: 0.5
+      stability_weight: 0.1
+      target_stability: 1.2
+    name: drainage
+    parameters:
+      channel_positions:
+      - - 0
+        - 0
+        - 0
+      - - 20
+        - 0
+        - 0
+      - - 40
+        - 0
+        - 0
+      - - 60
+        - 0
+        - 0
+      flow_reduction: 0.6
+      implementation_time: 5
+      pressure_reduction: 0.5
+    type: drainage
+  - cost_model:
+      equipment_cost: 40000
+      labor_cost: 400
+      maintenance_cost: 2000
+      material_cost: 2000
+    effectiveness_model:
+      base_flow: 1.0
+      base_pressure: 1e6
+      flow_weight: 0.2
+      pressure_weight: 0.2
+      stability_weight: 0.6
+      target_stability: 1.8
+    name: support
+    parameters:
+      deformation_reduction: 0.8
+      element_positions:
+      - - 0
+        - 0
+        - 0
+      - - 10
+        - 0
+        - 0
+      - - 20
+        - 0
+        - 0
+      - - 30
+        - 0
+        - 0
+      - - 40
+        - 0
+        - 0
+      - - 50
+        - 0
+        - 0
+      - - 60
+        - 0
+        - 0
+      - - 70
+        - 0
+        - 0
+      implementation_time: 10
+      stress_reduction: 0.7
+    type: support
+output:
+  directory: results
+  format: numpy
+  save_fluid: true
+  save_interval: 0.1
+  save_particles: true
+  visualization:
+    enabled: true
+    format: png
+    interval: 0.5
+    variables:
+    - velocity
+    - pressure
+    - erosion_rate
+  visualization_interval: 10
+parallel:
+  amr_buffer_cells: 2
+  coarsening_threshold: 0.01
+  communication:
+    async_communication: true
+    buffer_size: 1024
+  load_balancing:
+    interval: 100
+    method: dynamic
+    threshold: 0.1
+  max_amr_level: 3
+  num_ranks: 8
+  output:
+    directory: results/parallel
+    performance_metrics:
+    - wall_time
+    - cpu_time
+    - memory_usage
+    - communication_time
+    - load_balance
+    save_amr_grid: true
+    save_decomposition: true
+    save_metrics: true
+    save_performance: true
+  refinement_threshold: 0.1
+simulation:
+  domain_size:
+  - 100.0
+  - 50.0
+  - 50.0
+  gravity:
+  - 0.0
+  - -9.81
+  - 0.0
+  grid_resolution:
+  - 101
+  - 51
+  - 51
+  initial_particles: 1000
+  output_interval: 100
+  time_step: 0.001
+  time_steps: 1000
+  total_time: 10.0
+validation:
+  experimental_data_file: data/experimental_data.npz
+  sensitivity_analysis:
+    compute_interactions: true
+    num_samples: 10
+    parameter_ranges:
+      bond_strength:
+      - 0.5e6
+      - 2.0e6
+      critical_shear_stress:
+      - 0.5
+      - 2.0
+      erosion_rate_coefficient:
+      - 5.0e-07
+      - 2.0e-06
+  statistics:
+    compute_basic: true
+    compute_correlation: true
+    compute_distribution: true
+  variables_to_compare:
+  - erosion_rate
+  - pressure
+  - velocity
