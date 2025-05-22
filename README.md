@@ -1,3 +1,146 @@
+# CFD-DEM Simulation Project
+
+A comprehensive Computational Fluid Dynamics (CFD) and Discrete Element Method (DEM) coupling framework for simulating particle-fluid interactions, with a focus on tunnel water inrush scenarios.
+
+## Project Structure
+
+```
+particle_flow_code/
+├── src/                           # Source code directory
+│   ├── cfd/                       # CFD-related modules
+│   ├── dem/                       # DEM-related modules
+│   ├── coupling/                  # CFD-DEM coupling algorithms
+│   ├── coarse_grained/           # Coarse-grained simulation methods
+│   ├── models/                    # Physical models and equations
+│   ├── validation/               # Validation and verification tools
+│   ├── mitigation/               # Risk mitigation strategies
+│   ├── parallel/                 # Parallel computing implementations
+│   ├── experimental/             # Experimental data processing
+│   ├── calibration/              # Model calibration tools
+│   ├── case_studies/            # Case study implementations
+│   ├── visualization/            # Visualization tools
+│   ├── erosion/                  # Erosion modeling
+│   └── main.py                   # Main simulation entry point
+│
+├── tests/                        # Test suite
+│   ├── test_cfd.py              # CFD module tests
+│   ├── test_dem.py              # DEM module tests
+│   ├── test_coupling.py         # Coupling algorithm tests
+│   ├── test_erosion.py          # Erosion model tests
+│   ├── test_force_models.py     # Force model tests
+│   ├── test_main.py             # Main module tests
+│   ├── test_real_time_visualizer.py  # Visualization tests
+│   ├── test_tunnel_water_inrush.py   # Tunnel water inrush tests
+│   ├── test_visualization.py     # Visualization module tests
+│   └── conftest.py              # Test configuration
+│
+├── data/                         # Data directory
+│   ├── input/                    # Input data files
+│   └── output/                   # Simulation output files
+│
+├── results/                      # Simulation results
+│   ├── visualizations/           # Generated visualizations
+│   └── analysis/                 # Analysis results
+│
+├── dashboard.py                  # Interactive dashboard
+├── demo.py                       # Demo simulation script
+├── create_presentation.py        # Presentation generation script
+├── config.yaml                   # Configuration file
+├── requirements.txt              # Python dependencies
+├── setup.py                      # Package setup file
+├── pytest.ini                    # PyTest configuration
+└── README.md                     # This file
+```
+
+## Setup Instructions
+
+1. **Environment Setup**
+   ```bash
+   # Create and activate virtual environment
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Install the package in development mode
+   pip install -e .
+   ```
+
+2. **Configuration**
+   - Review and modify `config.yaml` for your specific simulation parameters
+   - Ensure all required input data is present in the `data/input` directory
+
+3. **Running Tests**
+   ```bash
+   pytest tests/
+   ```
+
+## Usage
+
+### Running Simulations
+
+1. **Basic Simulation**
+   ```bash
+   python demo.py
+   ```
+
+2. **Interactive Dashboard**
+   ```bash
+   streamlit run dashboard.py
+   ```
+
+3. **Custom Simulation**
+   ```python
+   from src.main import Simulation
+   
+   sim = Simulation(config_path='config.yaml')
+   sim.run()
+   ```
+
+### Visualization
+
+The project includes several visualization options:
+
+1. **Real-time Visualization**
+   - Available through the dashboard interface
+   - Supports particle tracking and flow field visualization
+
+2. **Results Analysis**
+   - Access through the dashboard's analysis section
+   - Includes fluidity parameters, interaction analysis, and stability metrics
+
+3. **Presentation Generation**
+   ```bash
+   python create_presentation.py
+   ```
+
+## Key Features
+
+- CFD-DEM coupling for accurate particle-fluid interaction simulation
+- Real-time visualization and monitoring
+- Comprehensive validation and verification tools
+- Parallel computing support for large-scale simulations
+- Interactive dashboard for result analysis
+- Automated presentation generation
+- Extensive test suite for reliability
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+[Specify your license here]
+
+## Contact
+
+[Add contact information]
+
 # CFD-DEM Framework for Geotechnical Applications
 
 ## Overview
@@ -23,8 +166,8 @@ This project implements an advanced CFD-DEM (Computational Fluid Dynamics-Discre
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/JohnMutemi/particle_flow_code.git
-   cd particle_flow_code
+   git clone https://github.com/JohnMutemi/particle-flow-internal-erosion.git
+   cd particle-flow-internal-erosion
    ```
 
 2. **Create and Activate Virtual Environment**
@@ -144,5 +287,62 @@ The dashboard provides:
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
+
+# CFD-DEM Simulation Dashboard
+
+This is an interactive dashboard for CFD-DEM simulations, providing real-time visualization and analysis of simulation results.
+
+## Features
+
+- Interactive parameter adjustment
+- Real-time simulation monitoring
+- Comprehensive fluidity analysis
+- Results visualization and comparison
+- Progress tracking
+
+## Deployment Instructions
+
+### Local Deployment
+
+1. Install the required dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Run the dashboard:
+```bash
+streamlit run src/visualization/dashboard.py
+```
+
+### Streamlit Cloud Deployment
+
+1. Create a GitHub repository and push your code:
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git remote add origin <your-github-repo-url>
+git push -u origin main
+```
+
+2. Go to [Streamlit Cloud](https://streamlit.io/cloud)
+3. Sign in with your GitHub account
+4. Click "New app"
+5. Select your repository, branch, and main file path (`src/visualization/dashboard.py`)
+6. Click "Deploy"
+
+
+## Usage
+
+1. Launch the dashboard
+2. Adjust simulation parameters using the sliders
+3. Run the simulation
+4. View real-time results and analysis
+5. Export results as needed
+
+## Requirements
+
+- Python 3.8+
+- See requirements.txt for full dependency list
 
 
