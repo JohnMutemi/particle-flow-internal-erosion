@@ -104,4 +104,33 @@ class SeepageErosionBondModel:
         effective_shear_force = shear_force * self.bond_health
         effective_moment = moment * self.bond_health
         
-        return effective_normal_force, effective_shear_force, effective_moment 
+        return effective_normal_force, effective_shear_force, effective_moment
+
+    def compute_erosion_rate(self, particle_positions, particle_velocities, fluid_data):
+        """Compute a placeholder erosion rate based on fluid velocity magnitudes at particle positions."""
+        # For now, use the mean fluid velocity magnitude as a proxy for erosion rate
+        velocity_field = fluid_data['velocity_field']
+        erosion_rates = []
+        for pos in particle_positions:
+            # Interpolate fluid velocity at particle position
+            idx = tuple(np.clip((pos / fluid_data['domain_size'] * (np.array(fluid_data['grid_resolution']) - 1)).astype(int), 0, np.array(fluid_data['grid_resolution']) - 1))
+            fluid_velocity = velocity_field[idx]
+            erosion_rates.append(np.linalg.norm(fluid_velocity))
+        # Return mean erosion rate as a placeholder
+        return np.mean(erosion_rates)
+
+    def update_bonds(self, erosion_rate: float, time_step: float):
+        """Update bond health based on the computed erosion rate."""
+        # Update accumulated damage
+        self.accumulated_damage += erosion_rate * time_step
+        # Update bond health
+        self.bond_health = max(0.0, 1.0 - self.accumulated_damage)
+
+    def get_eroded_particles(self):
+        """Return a placeholder list of eroded particle indices based on bond health."""
+        # For now, return an empty list as a placeholder
+        return []
+
+    def get_bond_health(self):
+        """Return the current bond health value."""
+        return self.bond_health 

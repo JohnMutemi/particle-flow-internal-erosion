@@ -428,4 +428,229 @@ class ValidationManager:
         result = minimize(objective, x0=[np.mean(bounds)], bounds=[bounds], method='L-BFGS-B')
         best_param = result.x[0]
         best_error = result.fun
-        return {'best_param': best_param, 'best_error': best_error, 'success': result.success} 
+        return {'best_param': best_param, 'best_error': best_error, 'success': result.success}
+
+    def validate_erosion_rate(self, simulation_results: Dict,
+                            experimental_data: Dict) -> Dict:
+        """Validate erosion rate against experimental data."""
+        # Extract data
+        sim_time = np.array(simulation_results['time'])
+        sim_eroded = np.array(simulation_results['eroded_particles'])
+        exp_time = np.array(experimental_data['time'])
+        exp_eroded = np.array(experimental_data['eroded_particles'])
+        
+        # Interpolate simulation results to match experimental time points
+        sim_eroded_interp = np.interp(exp_time, sim_time, sim_eroded)
+        
+        # Compute error metrics
+        mse = np.mean((sim_eroded_interp - exp_eroded)**2)
+        rmse = np.sqrt(mse)
+        mae = np.mean(np.abs(sim_eroded_interp - exp_eroded))
+        r2 = stats.pearsonr(sim_eroded_interp, exp_eroded)[0]**2
+        
+        # Perform statistical test
+        t_stat, p_value = stats.ttest_ind(sim_eroded_interp, exp_eroded)
+        
+        # Create validation plot
+        plt.figure(figsize=(10, 6))
+        plt.plot(sim_time, sim_eroded, 'b-', label='Simulation')
+        plt.plot(exp_time, exp_eroded, 'r--', label='Experimental')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Number of Eroded Particles')
+        plt.title('Erosion Rate Validation')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.savefig(self.output_dir / 'erosion_rate_validation.png')
+        plt.close()
+        
+        return {
+            'mse': mse,
+            'rmse': rmse,
+            'mae': mae,
+            'r2': r2,
+            't_statistic': t_stat,
+            'p_value': p_value,
+            'is_valid': p_value > (1 - self.config['validation']['confidence_level'])
+        }
+    
+    def validate_fluid_forces(self, simulation_results: Dict,
+                            analytical_solution: Dict) -> Dict:
+        """Validate fluid forces against analytical solution."""
+        # Extract data
+        sim_forces = np.array(simulation_results['fluid_forces'])
+        ana_forces = np.array(analytical_solution['forces'])
+        
+        # Compute error metrics
+        force_magnitudes_sim = np.linalg.norm(sim_forces, axis=-1)
+        force_magnitudes_ana = np.linalg.norm(ana_forces, axis=-1)
+        
+        mse = np.mean((force_magnitudes_sim - force_magnitudes_ana)**2)
+        rmse = np.sqrt(mse)
+        mae = np.mean(np.abs(force_magnitudes_sim - force_magnitudes_ana))
+        r2 = stats.pearsonr(force_magnitudes_sim, force_magnitudes_ana)[0]**2
+        
+        # Create validation plot
+        plt.figure(figsize=(10, 6))
+        plt.hist(force_magnitudes_sim, bins=50, alpha=0.5, label='Simulation')
+        plt.hist(force_magnitudes_ana, bins=50, alpha=0.5, label='Analytical')
+        plt.xlabel('Force Magnitude (N)')
+        plt.ylabel('Frequency')
+        plt.title('Fluid Force Distribution Validation')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.savefig(self.output_dir / 'fluid_force_validation.png')
+        plt.close()
+        
+        return {
+            'mse': mse,
+            'rmse': rmse,
+            'mae': mae,
+            'r2': r2,
+            'is_valid': rmse < self.config['validation']['tolerance']
+        }
+    
+    def validate_bond_degradation(self, simulation_results: Dict,
+                                experimental_data: Dict) -> Dict:
+        """Validate bond degradation against experimental data."""
+        # Extract data
+        sim_time = np.array(simulation_results['time'])
+        sim_health = np.array(simulation_results['bond_health'])
+        exp_time = np.array(experimental_data['time'])
+        exp_health = np.array(experimental_data['bond_health'])
+        
+        # Interpolate simulation results to match experimental time points
+        sim_health_interp = np.interp(exp_time, sim_time, sim_health)
+        
+        # Compute error metrics
+        mse = np.mean((sim_health_interp - exp_health)**2)
+        rmse = np.sqrt(mse)
+        mae = np.mean(np.abs(sim_health_interp - exp_health))
+        r2 = stats.pearsonr(sim_health_interp, exp_health)[0]**2
+        
+        # Create validation plot
+        plt.figure(figsize=(10, 6))
+        plt.plot(sim_time, sim_health, 'b-', label='Simulation')
+        plt.plot(exp_time, exp_health, 'r--', label='Experimental')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Bond Health')
+        plt.title('Bond Degradation Validation')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.savefig(self.output_dir / 'bond_degradation_validation.png')
+        plt.close()
+        
+        return {
+            'mse': mse,
+            'rmse': rmse,
+            'mae': mae,
+            'r2': r2,
+            'is_valid': rmse < self.config['validation']['tolerance']
+        }
+    
+    def validate_conservation_laws(self, simulation_results: Dict) -> Dict:
+        """Validate conservation of mass, momentum, and energy."""
+        # Extract data
+        time = np.array(simulation_results['time'])
+        positions = np.array(simulation_results['particle_positions'])
+        velocities = np.array(simulation_results['particle_velocities'])
+        forces = np.array(simulation_results['fluid_forces'])
+        
+        # Compute total mass (assuming constant particle mass)
+        total_mass = np.sum(self.config['dem']['particle_mass'])
+        
+        # Compute total momentum
+        momentum = np.sum(velocities * self.config['dem']['particle_mass'][:, np.newaxis], axis=0)
+        
+        # Compute total energy (kinetic + potential)
+        kinetic_energy = 0.5 * np.sum(self.config['dem']['particle_mass'] * 
+                                    np.linalg.norm(velocities, axis=-1)**2)
+        potential_energy = np.sum(self.config['dem']['particle_mass'] * 
+                                self.config['simulation']['gravity'][2] * 
+                                positions[:, 2])
+        total_energy = kinetic_energy + potential_energy
+        
+        # Compute conservation errors
+        mass_error = np.abs(total_mass - self.config['dem']['initial_mass'])
+        momentum_error = np.linalg.norm(momentum - self.config['dem']['initial_momentum'])
+        energy_error = np.abs(total_energy - self.config['dem']['initial_energy'])
+        
+        # Create validation plots
+        plt.figure(figsize=(15, 5))
+        
+        # Mass conservation
+        plt.subplot(131)
+        plt.plot(time, np.ones_like(time) * total_mass, 'b-')
+        plt.axhline(y=self.config['dem']['initial_mass'], color='r', linestyle='--')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Total Mass (kg)')
+        plt.title('Mass Conservation')
+        plt.grid(True, alpha=0.3)
+        
+        # Momentum conservation
+        plt.subplot(132)
+        plt.plot(time, np.linalg.norm(momentum, axis=-1), 'b-')
+        plt.axhline(y=np.linalg.norm(self.config['dem']['initial_momentum']), 
+                   color='r', linestyle='--')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Total Momentum (kg⋅m/s)')
+        plt.title('Momentum Conservation')
+        plt.grid(True, alpha=0.3)
+        
+        # Energy conservation
+        plt.subplot(133)
+        plt.plot(time, total_energy, 'b-')
+        plt.axhline(y=self.config['dem']['initial_energy'], color='r', linestyle='--')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Total Energy (J)')
+        plt.title('Energy Conservation')
+        plt.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.savefig(self.output_dir / 'conservation_laws_validation.png')
+        plt.close()
+        
+        return {
+            'mass_error': mass_error,
+            'momentum_error': momentum_error,
+            'energy_error': energy_error,
+            'is_valid': (mass_error < self.config['validation']['tolerance'] and
+                        momentum_error < self.config['validation']['tolerance'] and
+                        energy_error < self.config['validation']['tolerance'])
+        }
+    
+    def generate_validation_report(self, validation_results: Dict):
+        """Generate a comprehensive validation report."""
+        report = {
+            'timestamp': str(np.datetime64('now')),
+            'validation_parameters': self.config['validation'],
+            'results': validation_results
+        }
+        
+        # Save report
+        with open(self.output_dir / 'validation_report.json', 'w') as f:
+            json.dump(report, f, indent=4)
+        
+        # Generate summary plot
+        plt.figure(figsize=(10, 6))
+        
+        metrics = ['mse', 'rmse', 'mae', 'r2']
+        categories = ['erosion_rate', 'fluid_forces', 'bond_degradation']
+        
+        x = np.arange(len(categories))
+        width = 0.2
+        
+        for i, metric in enumerate(metrics):
+            values = [validation_results[cat][metric] for cat in categories]
+            plt.bar(x + i*width, values, width, label=metric.upper())
+        
+        plt.xlabel('Validation Category')
+        plt.ylabel('Error Metric')
+        plt.title('Validation Summary')
+        plt.xticks(x + width, categories)
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        
+        plt.savefig(self.output_dir / 'validation_summary.png')
+        plt.close()
+        
+        logger.info("Validation report generated successfully") 

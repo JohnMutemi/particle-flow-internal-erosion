@@ -89,10 +89,12 @@ class CFDSolver:
     def compute_fluid_forces(self, particle_positions: List[np.ndarray]) -> List[np.ndarray]:
         """Compute fluid forces on particles using interpolated field values."""
         forces = []
+        # Compute the pressure gradient field once
+        pressure_gradient_field = self._compute_pressure_gradient_field()
         for position in particle_positions:
-            # Interpolate velocity and pressure at particle position
+            # Interpolate velocity and pressure gradient at particle position
             velocity = self._interpolate_field(position, self.velocity_field)
-            pressure_gradient = self._compute_pressure_gradient(position)
+            pressure_gradient = self._interpolate_field(position, pressure_gradient_field)
             vorticity = self._interpolate_field(position, self.vorticity_field)
             
             # Compute forces
@@ -348,6 +350,26 @@ class CFDSolver:
                     gradient[i,j,k] = np.array([dx, dy, dz])
         
         return gradient
+
+    def _compute_drag_force(self, velocity: np.ndarray, particle_positions: list) -> np.ndarray:
+        """Compute drag force on a particle using Stokes' law as a placeholder."""
+        # Assume all particles have the same diameter for now
+        particle_diameter = 0.01  # meters (placeholder)
+        drag_coefficient = 3 * np.pi * self.fluid_viscosity * particle_diameter
+        return -drag_coefficient * velocity
+
+    def _compute_pressure_force(self, pressure_gradient: np.ndarray) -> np.ndarray:
+        """Compute pressure force on a particle."""
+        particle_volume = 4/3 * np.pi * (0.005)**3  # for 1cm diameter sphere (placeholder)
+        return -pressure_gradient * particle_volume
+
+    def _compute_lift_force(self, velocity: np.ndarray, vorticity: np.ndarray) -> np.ndarray:
+        """Compute lift force using Saffman lift as a placeholder."""
+        particle_diameter = 0.01  # meters (placeholder)
+        fluid_density = self.fluid_density
+        # Saffman lift: F_lift = C_lift * rho * d^2 * (v x w)
+        C_lift = 1.61  # Saffman constant (placeholder)
+        return C_lift * fluid_density * particle_diameter**2 * np.cross(velocity, vorticity)
 
     def get_fluid_data(self) -> Dict:
         """Get current fluid field data."""

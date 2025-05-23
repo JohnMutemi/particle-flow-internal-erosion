@@ -56,8 +56,8 @@ cfd:
     - 0.0
     - 0.0
     - 0.0
-  fluid_density: 970.0
-  fluid_viscosity: 0.0008
+  fluid_density: 960.0
+  fluid_viscosity: 0.0055
   pressure_gradient:
   - 1.0
   - 0.0
@@ -93,7 +93,7 @@ coupling:
   virtual_mass: true
 dem:
   bond_radius: 0.015
-  bond_strength: 1000000.0
+  bond_strength: 600099.0
   damping_coefficient: 0.1
   friction_coefficient: 0.5
   particle_density: 2650.0

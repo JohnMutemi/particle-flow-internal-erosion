@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 import logging
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +19,17 @@ class SimulationVisualizer:
         self.config = config
         self.fig = None
         self.animation = None
+        self.figsize = (12, 8)
+        self.dpi = 300
+        self.cmap = 'viridis'
         
         # Set style
         plt.style.use('seaborn-v0_8')  # Use a valid seaborn style
         sns.set_theme()  # Set seaborn theme
+        
+        # Set up output directory
+        self.output_dir = Path(config['output']['directory'])
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         logger.info("Visualization module initialized")
 
@@ -239,4 +247,139 @@ class SimulationVisualizer:
     def close(self):
         """Close all figures."""
         plt.close('all')
-        logger.info("All figures closed") 
+        logger.info("All figures closed")
+
+    def plot_particle_distribution(self, positions: np.ndarray,
+                                 bond_health: np.ndarray,
+                                 output_file: Path):
+        """Plot particle distribution with bond health coloring."""
+        plt.figure(figsize=self.figsize, dpi=self.dpi)
+        
+        # Create 3D scatter plot
+        scatter = plt.scatter(
+            positions[:, 0],
+            positions[:, 1],
+            c=bond_health,
+            cmap=self.cmap,
+            s=50,
+            alpha=0.6
+        )
+        
+        # Add colorbar
+        plt.colorbar(scatter, label='Bond Health')
+        
+        # Set labels and title
+        plt.xlabel('X Position')
+        plt.ylabel('Y Position')
+        plt.title('Particle Distribution with Bond Health')
+        
+        # Add grid
+        plt.grid(True, alpha=0.3)
+        
+        # Save figure
+        plt.savefig(output_file, bbox_inches='tight')
+        plt.close()
+    
+    def plot_fluid_field(self, velocity_field: np.ndarray,
+                        pressure_field: np.ndarray,
+                        output_file: Path):
+        """Plot fluid velocity and pressure fields."""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=self.figsize, dpi=self.dpi)
+        
+        # Plot velocity magnitude
+        velocity_magnitude = np.linalg.norm(velocity_field, axis=-1)
+        im1 = ax1.imshow(
+            velocity_magnitude[:, :, velocity_field.shape[2]//2],
+            cmap=self.cmap,
+            origin='lower'
+        )
+        ax1.set_title('Fluid Velocity Magnitude')
+        plt.colorbar(im1, ax=ax1, label='Velocity (m/s)')
+        
+        # Plot pressure
+        im2 = ax2.imshow(
+            pressure_field[:, :, pressure_field.shape[2]//2],
+            cmap=self.cmap,
+            origin='lower'
+        )
+        ax2.set_title('Fluid Pressure')
+        plt.colorbar(im2, ax=ax2, label='Pressure (Pa)')
+        
+        # Set labels
+        for ax in [ax1, ax2]:
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+        
+        # Save figure
+        plt.tight_layout()
+        plt.savefig(output_file, bbox_inches='tight')
+        plt.close()
+    
+    def plot_erosion_progress(self, time: List[float],
+                            eroded_particles: List[int],
+                            bond_health: List[float],
+                            output_file: Path):
+        """Plot erosion progress over time."""
+        plt.figure(figsize=self.figsize, dpi=self.dpi)
+        
+        # Create subplots
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=self.figsize, dpi=self.dpi)
+        
+        # Plot number of eroded particles
+        ax1.plot(time, eroded_particles, 'r-', label='Eroded Particles')
+        ax1.set_xlabel('Time (s)')
+        ax1.set_ylabel('Number of Eroded Particles')
+        ax1.set_title('Erosion Progress')
+        ax1.grid(True, alpha=0.3)
+        ax1.legend()
+        
+        # Plot average bond health
+        ax2.plot(time, bond_health, 'b-', label='Average Bond Health')
+        ax2.set_xlabel('Time (s)')
+        ax2.set_ylabel('Bond Health')
+        ax2.set_title('Bond Degradation')
+        ax2.grid(True, alpha=0.3)
+        ax2.legend()
+        
+        # Save figure
+        plt.tight_layout()
+        plt.savefig(output_file, bbox_inches='tight')
+        plt.close()
+    
+    def plot_force_distribution(self, forces: np.ndarray,
+                              output_file: Path):
+        """Plot distribution of forces on particles."""
+        plt.figure(figsize=self.figsize, dpi=self.dpi)
+        
+        # Compute force magnitudes
+        force_magnitudes = np.linalg.norm(forces, axis=-1)
+        
+        # Create histogram
+        plt.hist(force_magnitudes, bins=50, alpha=0.7)
+        plt.xlabel('Force Magnitude (N)')
+        plt.ylabel('Number of Particles')
+        plt.title('Distribution of Forces on Particles')
+        plt.grid(True, alpha=0.3)
+        
+        # Save figure
+        plt.savefig(output_file, bbox_inches='tight')
+        plt.close()
+    
+    def plot_velocity_distribution(self, velocities: np.ndarray,
+                                 output_file: Path):
+        """Plot distribution of particle velocities."""
+        plt.figure(figsize=self.figsize, dpi=self.dpi)
+        
+        # Compute velocity magnitudes
+        velocity_magnitudes = np.linalg.norm(velocities, axis=-1)
+        
+        # Create histogram
+        plt.hist(velocity_magnitudes, bins=50, alpha=0.7)
+        plt.xlabel('Velocity Magnitude (m/s)')
+        plt.ylabel('Number of Particles')
+        plt.title('Distribution of Particle Velocities')
+        plt.grid(True, alpha=0.3)
+        
+        # Save figure
+        plt.savefig(output_file, bbox_inches='tight')
+        plt.close() 

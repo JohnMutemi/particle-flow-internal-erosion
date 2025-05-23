@@ -1,5 +1,11 @@
 """
 CFD-DEM coupling framework for fluid-particle interaction simulation.
+
+This module implements the coupling between CFD (fluid) and DEM (particles), using geotechnical parameters such as density, specific gravity, water content, Cu, Cc, clay content, permeability, etc., to compute fluid-particle interaction forces and update particle bonds.
+
+References:
+- Gu et al. (2019), Acta Geotechnica
+- User's personal geotechnical parameters (see config)
 """
 
 import numpy as np
@@ -30,19 +36,68 @@ class CFDDEMCoupling:
         else:
             self.coarse_model = None
         
+        # Load geotechnical parameters
+        self.geotech_params = self._load_geotech_params()
+        
         # Coupling parameters
         self.coupling_interval = config['coupling'].get('interval', 1)
         self.interpolation_method = config['coupling'].get('interpolation', 'linear')
         
-        # Erosion parameters
-        self.critical_shear_stress = config['erosion'].get('critical_shear_stress', 1.0)
-        self.erosion_rate_coefficient = config['erosion'].get('erosion_rate_coefficient', 1e-6)
+        # Erosion parameters (calibrated with geotechnical parameters)
+        self.critical_shear_stress = self._calibrate_critical_shear_stress()
+        self.erosion_rate_coefficient = self._calibrate_erosion_rate()
         
         # State tracking
         self.eroded_particles = []
         self.bond_health_history = []
+        self.fluid_particle_interactions = []
         
-        logger.info("CFD-DEM coupling framework initialized")
+        logger.info("CFD-DEM coupling framework initialized with geotechnical parameters")
+
+    def _load_geotech_params(self) -> Dict:
+        """Load geotechnical parameters from config."""
+        return {
+            'clay_content': self.config['geotechnical']['clay_content'],
+            'water_content': self.config['geotechnical']['water_content'],
+            'Cu': self.config['geotechnical']['Cu'],
+            'Cc': self.config['geotechnical']['Cc'],
+            'cohesion': self.config['geotechnical']['cohesion'],
+            'permeability': self.config['geotechnical']['permeability'],
+            'density': self.config['geotechnical']['density'],
+            'specific_gravity': self.config['geotechnical']['specific_gravity'],
+            'porosity': self.config['geotechnical']['porosity'],
+            'void_ratio': self.config['geotechnical']['void_ratio']
+        }
+
+    def _calibrate_critical_shear_stress(self) -> float:
+        """Calibrate critical shear stress based on geotechnical parameters."""
+        base_stress = self.config['erosion'].get('critical_shear_stress', 1.0)
+        
+        # Adjust based on clay content
+        clay_factor = 1.0 + 0.2 * (self.geotech_params['clay_content'] / 20.0)
+        
+        # Adjust based on water content
+        water_factor = 1.0 - 0.3 * (self.geotech_params['water_content'] / 20.0)
+        
+        # Adjust based on Cu
+        cu_factor = 1.0 + 0.1 * (self.geotech_params['Cu'] / 10.0)
+        
+        return base_stress * clay_factor * water_factor * cu_factor
+
+    def _calibrate_erosion_rate(self) -> float:
+        """Calibrate erosion rate coefficient based on geotechnical parameters."""
+        base_rate = self.config['erosion'].get('erosion_rate_coefficient', 1e-6)
+        
+        # Adjust based on permeability
+        perm_factor = self.geotech_params['permeability'] / 1e-6  # Normalize to 1e-6 m/s
+        
+        # Adjust based on porosity
+        porosity_factor = self.geotech_params['porosity'] / 0.3  # Normalize to 0.3
+        
+        # Adjust based on void ratio
+        void_ratio_factor = self.geotech_params['void_ratio'] / 0.6  # Normalize to 0.6
+        
+        return base_rate * perm_factor * porosity_factor * void_ratio_factor
 
     def initialize_simulation(self):
         """Initialize the coupled simulation."""
@@ -60,6 +115,7 @@ class CFDDEMCoupling:
         # Initialize erosion tracking
         self.eroded_particles = []
         self.bond_health_history = []
+        self.fluid_particle_interactions = []
         
         logger.info("Coupled simulation initialized")
 
@@ -74,20 +130,24 @@ class CFDDEMCoupling:
         for i, (pos, vel, radius) in enumerate(zip(particle_positions, 
                                                  fluid_velocities, 
                                                  particle_radii)):
-            # Drag force
+            # Drag force (adjusted for geotechnical parameters)
             drag_force = self._compute_drag_force(vel, radius)
             
-            # Pressure gradient force
+            # Pressure gradient force (adjusted for geotechnical parameters)
             pressure_force = self._compute_pressure_force(pos)
             
-            # Buoyancy force
+            # Buoyancy force (adjusted for geotechnical parameters)
             buoyancy_force = self._compute_buoyancy_force(radius)
             
-            # Erosion force (new)
+            # Erosion force (calibrated with geotechnical parameters)
             erosion_force = self._compute_erosion_force(vel, radius)
             
             # Total force
             total_force = drag_force + pressure_force + buoyancy_force + erosion_force
+            
+            # Track fluid-particle interaction
+            self._track_fluid_particle_interaction(pos, vel, total_force)
+            
             forces.append(total_force)
         
         return forces
@@ -164,17 +224,25 @@ class CFDDEMCoupling:
 
     def _compute_drag_force(self, fluid_velocity: np.ndarray,
                           particle_radius: float) -> np.ndarray:
-        """Compute drag force on particle."""
-        # Reynolds number
+        """Compute drag force on particle (adjusted for geotechnical parameters)."""
+        # Reynolds number (adjusted for geotechnical parameters)
         Re = (np.linalg.norm(fluid_velocity) * particle_radius * 
               self.config['cfd']['fluid_density'] / 
               self.config['cfd']['fluid_viscosity'])
+        
+        # Adjust Reynolds number based on clay content
+        clay_factor = 1.0 + 0.1 * (self.geotech_params['clay_content'] / 20.0)
+        Re *= clay_factor
         
         # Drag coefficient
         if Re < 1:
             Cd = 24/Re
         else:
             Cd = 24/Re * (1 + 0.15 * Re**0.687)
+        
+        # Adjust drag coefficient based on water content
+        water_factor = 1.0 - 0.2 * (self.geotech_params['water_content'] / 20.0)
+        Cd *= water_factor
         
         # Drag force
         drag_force = (0.5 * self.config['cfd']['fluid_density'] * 
@@ -185,9 +253,13 @@ class CFDDEMCoupling:
         return drag_force
 
     def _compute_pressure_force(self, position: np.ndarray) -> np.ndarray:
-        """Compute pressure gradient force on particle."""
+        """Compute pressure gradient force on particle (adjusted for geotechnical parameters)."""
         # Get pressure gradient from configuration
         pressure_gradient = np.array(self.config['cfd']['pressure_gradient'])
+        
+        # Adjust pressure gradient based on permeability
+        perm_factor = self.geotech_params['permeability'] / 1e-6  # Normalize to 1e-6 m/s
+        pressure_gradient *= perm_factor
         
         # Pressure force
         pressure_force = -pressure_gradient * (4/3 * np.pi * 
@@ -196,9 +268,13 @@ class CFDDEMCoupling:
         return pressure_force
 
     def _compute_buoyancy_force(self, particle_radius: float) -> np.ndarray:
-        """Compute buoyancy force on particle."""
+        """Compute buoyancy force on particle (adjusted for geotechnical parameters)."""
+        # Adjust fluid density based on water content
+        water_factor = 1.0 + 0.1 * (self.geotech_params['water_content'] / 20.0)
+        adjusted_density = self.config['cfd']['fluid_density'] * water_factor
+        
         # Buoyancy force
-        buoyancy_force = (self.config['cfd']['fluid_density'] * 
+        buoyancy_force = (adjusted_density * 
                          self.config['simulation']['gravity'] * 
                          (4/3 * np.pi * particle_radius**3))
         
@@ -206,34 +282,37 @@ class CFDDEMCoupling:
 
     def _compute_erosion_force(self, fluid_velocity: np.ndarray,
                              particle_radius: float) -> np.ndarray:
-        """Compute erosion force based on fluid velocity."""
+        """Compute erosion force based on fluid velocity (calibrated with geotechnical parameters)."""
         velocity_magnitude = np.linalg.norm(fluid_velocity)
         
         # Check if velocity is below threshold for erosion
         if velocity_magnitude < 1e-6:  # Very low velocity threshold
             return np.zeros(3)
             
-        # Compute shear stress
-        shear_stress = self.config['cfd']['fluid_density'] * velocity_magnitude**2
+        # Compute shear stress (adjusted for geotechnical parameters)
+        shear_stress = self._compute_fluid_shear_stress(fluid_velocity, particle_radius)
         
         # Check if shear stress exceeds critical value
         if shear_stress < self.critical_shear_stress:
             return np.zeros(3)
             
-        # Compute erosion force
-        erosion_coefficient = self.erosion_rate_coefficient
-        force_magnitude = erosion_coefficient * shear_stress * np.pi * particle_radius**2
+        # Compute erosion force (calibrated with geotechnical parameters)
+        force_magnitude = self.erosion_rate_coefficient * shear_stress * np.pi * particle_radius**2
         
         # Force direction is opposite to fluid velocity
         return -force_magnitude * fluid_velocity / velocity_magnitude
 
     def _compute_fluid_shear_stress(self, fluid_velocity: np.ndarray,
                                   particle_radius: float) -> float:
-        """Compute fluid-induced shear stress on particle."""
-        # Reynolds number
+        """Compute fluid-induced shear stress on particle (adjusted for geotechnical parameters)."""
+        # Reynolds number (adjusted for geotechnical parameters)
         Re = (np.linalg.norm(fluid_velocity) * particle_radius * 
               self.config['cfd']['fluid_density'] / 
               self.config['cfd']['fluid_viscosity'])
+        
+        # Adjust Reynolds number based on clay content
+        clay_factor = 1.0 + 0.1 * (self.geotech_params['clay_content'] / 20.0)
+        Re *= clay_factor
         
         # Drag coefficient
         if Re < 1:
@@ -241,10 +320,29 @@ class CFDDEMCoupling:
         else:
             Cd = 24/Re * (1 + 0.15 * Re**0.687)
         
-        # Fluid shear stress
+        # Adjust drag coefficient based on water content
+        water_factor = 1.0 - 0.2 * (self.geotech_params['water_content'] / 20.0)
+        Cd *= water_factor
+        
+        # Fluid shear stress (adjusted for geotechnical parameters)
         shear_stress = 0.5 * self.config['cfd']['fluid_density'] * np.linalg.norm(fluid_velocity)**2 * Cd
         
+        # Adjust shear stress based on Cu
+        cu_factor = 1.0 + 0.1 * (self.geotech_params['Cu'] / 10.0)
+        shear_stress *= cu_factor
+        
         return shear_stress
+
+    def _track_fluid_particle_interaction(self, position: np.ndarray,
+                                        velocity: np.ndarray,
+                                        force: np.ndarray):
+        """Track fluid-particle interaction for analysis."""
+        self.fluid_particle_interactions.append({
+            'position': position,
+            'velocity': velocity,
+            'force': force,
+            'time': len(self.fluid_particle_interactions) * self.config['simulation']['time_step']
+        })
 
     def step(self):
         """Perform one time step of the coupled simulation."""
@@ -333,20 +431,10 @@ class CFDDEMCoupling:
             'average_force': average_force
         }
 
-    def get_bond_health_statistics(self) -> Dict:
-        """Get statistics about bond health."""
-        if not self.bond_health_history:
-            return {
-                'current_health': 1.0,
-                'degradation_rate': 0.0
-            }
-        
-        # Compute statistics
-        current_health = self.bond_health_history[-1]
-        degradation_rate = (1.0 - current_health) / (len(self.bond_health_history) * 
-                                                   self.config['simulation']['time_step'])
-        
-        return {
-            'current_health': current_health,
-            'degradation_rate': degradation_rate
-        }
+    def get_fluid_particle_interactions(self) -> List[Dict]:
+        """Get history of fluid-particle interactions."""
+        return self.fluid_particle_interactions
+
+    def get_bond_health_history(self) -> List[float]:
+        """Get history of bond health values."""
+        return self.bond_health_history

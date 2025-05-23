@@ -64,4 +64,12 @@ class DEMSolver:
             'positions': positions,
             'velocities': velocities,
             'forces': forces
-        } 
+        }
+
+    def apply_forces(self, forces: List[np.ndarray]):
+        """Apply external forces (e.g., from fluid) to particles by updating their velocities."""
+        for i, force in enumerate(forces):
+            # F = m*a => a = F/m
+            mass = (4/3) * np.pi * (self.particle_radius**3) * self.particle_density
+            acceleration = force / mass
+            self.particles[i]['velocity'] += acceleration * self.time_step 

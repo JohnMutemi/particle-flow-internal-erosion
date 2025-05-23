@@ -1,11 +1,20 @@
 """
-Tunnel water inrush case study implementation.
-This module simulates the water inrush scenario in an 80m tunnel with muddy water.
+Tunnel water inrush case study module.
+
+This module implements the tunnel water inrush scenario, including:
+1. Initial condition setup
+2. Boundary condition application
+3. Erosion and failure analysis
+4. Risk assessment
 """
 
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import logging
+from pathlib import Path
+import json
+from scipy import stats
+import matplotlib.pyplot as plt
 from src.cfd.coupling import CFDDEMCoupling
 from src.visualization.real_time_visualizer import RealTimeVisualizer
 from src.cfd.force_models import ForceModels
@@ -16,6 +25,17 @@ class TunnelWaterInrush:
     def __init__(self, config: Dict):
         """Initialize the tunnel water inrush case study."""
         self.config = config
+        
+        # Initialize logging
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        
+        # Load case study parameters
+        self.case_params = self._load_case_params()
+        
+        # Initialize output directory
+        self.output_dir = Path(config['output']['directory']) / 'tunnel_inrush'
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize coupling framework
         self.coupling = CFDDEMCoupling(config)
@@ -43,7 +63,22 @@ class TunnelWaterInrush:
         self.fluid_data = []
         self.erosion_data = []
         
-        logger.info("Tunnel water inrush case study initialized")
+        self.logger.info("Tunnel water inrush case study initialized")
+
+    def _load_case_params(self) -> Dict:
+        """Load case study parameters from config."""
+        return {
+            'tunnel': {
+                'center': np.array(self.config['case_study']['tunnel']['center']),
+                'diameter': self.config['case_study']['tunnel']['diameter'],
+                'length': self.config['case_study']['tunnel']['length']
+            },
+            'water_pressure': {
+                'inlet': self.config['case_study']['water_pressure']['inlet'],
+                'outlet': self.config['case_study']['water_pressure']['outlet']
+            },
+            'mud_concentration': self.config['case_study']['mud_concentration']
+        }
 
     def _initialize_tunnel_geometry(self):
         """Initialize tunnel geometry and boundary conditions."""
@@ -95,90 +130,132 @@ class TunnelWaterInrush:
         self.coupling.cfd_solver.set_tunnel_geometry(tunnel_params)
         self.coupling.cfd_solver.set_boundary_conditions(boundary_conditions)
         
-        logger.info("Tunnel geometry and boundary conditions initialized")
+        self.logger.info("Tunnel geometry and boundary conditions initialized")
 
-    def setup_initial_conditions(self):
+    def setup_initial_conditions(self, domain_size: Tuple[float, float, float],
+                               particle_radius: float) -> Dict:
         """Set up initial conditions for the tunnel water inrush scenario."""
-        # Initialize simulation
-        self.coupling.initialize_simulation()
+        # Create particle positions
+        positions = self._create_particle_positions(domain_size, particle_radius)
         
-        # Set up initial water pressure
-        self._setup_water_pressure()
+        # Create initial velocities
+        velocities = np.zeros_like(positions)
         
-        # Set up initial particle distribution
-        self._setup_particle_distribution()
+        # Create initial bond health
+        bond_health = np.ones(len(positions))
         
-        # Start real-time visualization
-        self.visualizer.start()
+        # Apply tunnel geometry
+        self._apply_tunnel_geometry(positions, bond_health)
         
-        logger.info("Initial conditions set up")
+        # Apply initial water pressure
+        pressure_field = self._create_pressure_field(domain_size)
+        
+        # Create initial velocity field
+        velocity_field = self._create_velocity_field(domain_size)
+        
+        return {
+            'positions': positions,
+            'velocities': velocities,
+            'bond_health': bond_health,
+            'pressure_field': pressure_field,
+            'velocity_field': velocity_field
+        }
 
-    def _setup_water_pressure(self):
-        """Set up initial water pressure distribution."""
-        # Get grid points
-        x = np.linspace(0, self.tunnel_length, self.config['simulation']['grid_resolution'][0])
-        y = np.linspace(-self.tunnel_diameter/2, self.tunnel_diameter/2, 
-                       self.config['simulation']['grid_resolution'][1])
-        z = np.linspace(-self.tunnel_diameter/2, self.tunnel_diameter/2,
-                       self.config['simulation']['grid_resolution'][2])
-        X, Y, Z = np.meshgrid(x, y, z)
+    def _create_particle_positions(self, domain_size: Tuple[float, float, float],
+                                 particle_radius: float) -> np.ndarray:
+        """Create initial particle positions."""
+        # Compute number of particles
+        volume = domain_size[0] * domain_size[1] * domain_size[2]
+        particle_volume = 4/3 * np.pi * particle_radius**3
+        num_particles = int(volume / particle_volume * 0.6)  # 60% packing density
         
-        # Compute distance from tunnel center
-        R = np.sqrt(Y**2 + Z**2)
+        # Create random positions
+        positions = np.random.rand(num_particles, 3)
+        positions[:, 0] *= domain_size[0]
+        positions[:, 1] *= domain_size[1]
+        positions[:, 2] *= domain_size[2]
         
-        # Set pressure based on radial distance
-        pressure = np.zeros_like(X)
-        mask = R <= self.tunnel_diameter/2
-        pressure[mask] = self.water_pressure * (1 - R[mask]/(self.tunnel_diameter/2))
-        
-        # Update pressure field in CFD solver
-        self.coupling.cfd_solver.pressure_field = pressure
-        
-        logger.info("Initial water pressure distribution set up")
+        return positions
 
-    def _setup_particle_distribution(self):
-        """Set up initial particle distribution in the tunnel."""
-        num_particles = self.config['simulation']['initial_particles']
-        particles = []
+    def _apply_tunnel_geometry(self, positions: np.ndarray,
+                             bond_health: np.ndarray):
+        """Apply tunnel geometry to particle positions and bond health."""
+        tunnel_center = self.case_params['tunnel']['center']
+        tunnel_radius = self.case_params['tunnel']['diameter'] / 2
         
-        # Get scaling factors
-        length_scale = self.config['simulation']['domain_size'][0] / self.tunnel_length
-        diameter_scale = self.config['simulation']['domain_size'][1] / self.tunnel_diameter
+        # Compute distances from tunnel center
+        distances = np.linalg.norm(positions - tunnel_center, axis=1)
         
-        for _ in range(num_particles):
-            # Random position within tunnel in real-world coordinates
-            r = np.random.uniform(0, min(self.tunnel_diameter/2, self.config['simulation']['domain_size'][1]/2))
-            theta = np.random.uniform(0, 2*np.pi)
-            x = np.random.uniform(0, min(self.tunnel_length, self.config['simulation']['domain_size'][0]))
-            
-            # Convert to Cartesian coordinates
-            y = r * np.cos(theta)
-            z = r * np.sin(theta)
-            
-            # Scale to simulation domain
-            position = np.array([
-                x * length_scale,
-                y * diameter_scale,
-                z * diameter_scale
-            ])
-            
-            # Add particle with boundary checking
-            particles.append({
-                'position': position,
-                'velocity': np.zeros(3),
-                'radius': min(self.config['dem']['particle_radius'], 
-                            min(self.tunnel_diameter/4, min(self.config['simulation']['domain_size'][1:])/4)),
-                'density': self.config['dem']['particle_density']
-            })
+        # Remove particles inside tunnel
+        mask = distances > tunnel_radius
+        positions[:] = positions[mask]
+        bond_health[:] = bond_health[mask]
         
-        # Update particle positions in DEM solver
-        self.coupling.dem_solver.particles = particles
+        # Reduce bond health near tunnel surface
+        surface_distance = 2 * tunnel_radius
+        surface_mask = distances < surface_distance
+        bond_health[surface_mask] *= 0.8
+
+    def _create_pressure_field(self, domain_size: Tuple[float, float, float]) -> np.ndarray:
+        """Create initial pressure field."""
+        # Create grid
+        nx, ny, nz = 100, 100, 100
+        x = np.linspace(0, domain_size[0], nx)
+        y = np.linspace(0, domain_size[1], ny)
+        z = np.linspace(0, domain_size[2], nz)
         
-        logger.info(f"Initial particle distribution set up with {num_particles} particles")
+        # Create pressure field
+        pressure = np.zeros((nx, ny, nz))
+        
+        # Apply pressure gradient
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    # Compute distance from tunnel
+                    pos = np.array([x[i], y[j], z[k]])
+                    distance = np.linalg.norm(pos - self.case_params['tunnel']['center'])
+                    
+                    if distance > self.case_params['tunnel']['diameter'] / 2:
+                        # Linear pressure gradient
+                        pressure[i, j, k] = self.case_params['water_pressure']['inlet'] - \
+                                          (self.case_params['water_pressure']['inlet'] - 
+                                           self.case_params['water_pressure']['outlet']) * \
+                                          distance / domain_size[0]
+        
+        return pressure
+
+    def _create_velocity_field(self, domain_size: Tuple[float, float, float]) -> np.ndarray:
+        """Create initial velocity field."""
+        # Create grid
+        nx, ny, nz = 100, 100, 100
+        x = np.linspace(0, domain_size[0], nx)
+        y = np.linspace(0, domain_size[1], ny)
+        z = np.linspace(0, domain_size[2], nz)
+        
+        # Create velocity field
+        velocity = np.zeros((nx, ny, nz, 3))
+        
+        # Apply initial velocity based on pressure gradient
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    # Compute distance from tunnel
+                    pos = np.array([x[i], y[j], z[k]])
+                    distance = np.linalg.norm(pos - self.case_params['tunnel']['center'])
+                    
+                    if distance > self.case_params['tunnel']['diameter'] / 2:
+                        # Compute velocity based on pressure gradient
+                        pressure_gradient = (self.case_params['water_pressure']['inlet'] - 
+                                          self.case_params['water_pressure']['outlet']) / \
+                                          domain_size[0]
+                        velocity[i, j, k, 0] = -pressure_gradient / \
+                                             self.config['cfd']['fluid_viscosity']
+        
+        return velocity
 
     def run_simulation(self, num_steps: int):
         """Run the tunnel water inrush simulation."""
-        logger.info(f"Starting simulation for {num_steps} steps")
+        self.logger.info(f"Starting simulation for {num_steps} steps")
         
         for step in range(num_steps):
             try:
@@ -203,9 +280,9 @@ class TunnelWaterInrush:
                 self._store_statistics(step)
                 
                 if step % 100 == 0:
-                    logger.info(f"Completed step {step}/{num_steps}")
+                    self.logger.info(f"Completed step {step}/{num_steps}")
             except Exception as e:
-                logger.error(f"Error during simulation step {step}: {e}")
+                self.logger.error(f"Error during simulation step {step}: {e}")
                 continue
 
     def _update_erosion(self):
@@ -236,7 +313,7 @@ class TunnelWaterInrush:
                 # Update particle erosion state
                 self._update_particle_erosion(particle, shear_stress)
             except IndexError as e:
-                logger.warning(f"Index error during interpolation: {e}")
+                self.logger.warning(f"Index error during interpolation: {e}")
                 continue
 
     def _is_position_in_bounds(self, position: np.ndarray) -> bool:
@@ -295,7 +372,7 @@ class TunnelWaterInrush:
                     time_step=step * self.config['simulation']['time_step']
                 )
             except Exception as e:
-                logger.warning(f"Error during visualization update: {e}")
+                self.logger.warning(f"Error during visualization update: {e}")
 
     def _store_statistics(self, step: int):
         """Store simulation statistics."""
@@ -319,7 +396,7 @@ class TunnelWaterInrush:
             fluid_data = self.coupling.cfd_solver.get_fluid_data()
             self.fluid_data.append(fluid_data)
         except Exception as e:
-            logger.warning(f"Error during statistics storage: {e}")
+            self.logger.warning(f"Error during statistics storage: {e}")
 
     def save_results(self, filename: str = None):
         """Save simulation results."""
@@ -336,17 +413,159 @@ class TunnelWaterInrush:
                 fluid_data=np.array(self.fluid_data)
             )
             
-            logger.info(f"Results saved to {filename}")
+            self.logger.info(f"Results saved to {filename}")
             
             # Save visualization
             self.visualizer.save_animation()
         except Exception as e:
-            logger.error(f"Error saving results: {e}")
+            self.logger.error(f"Error saving results: {e}")
 
     def close(self):
         """Clean up resources."""
         try:
             self.visualizer.close()
-            logger.info("Resources cleaned up")
+            self.logger.info("Resources cleaned up")
         except Exception as e:
-            logger.error(f"Error during cleanup: {e}") 
+            self.logger.error(f"Error during cleanup: {e}")
+
+    def analyze_erosion_progress(self, simulation_results: Dict) -> Dict:
+        """Analyze erosion progress and failure risk."""
+        # Extract data
+        time = np.array(simulation_results['time'])
+        eroded_particles = np.array(simulation_results['eroded_particles'])
+        bond_health = np.array(simulation_results['bond_health'])
+        positions = np.array(simulation_results['particle_positions'])
+        
+        # Compute erosion rate
+        erosion_rate = np.gradient(eroded_particles, time)
+        
+        # Compute failure risk
+        risk = self._compute_failure_risk(eroded_particles, bond_health, positions)
+        
+        # Create analysis plots
+        self._create_analysis_plots(time, eroded_particles, bond_health, 
+                                  erosion_rate, risk)
+        
+        return {
+            'erosion_rate': erosion_rate,
+            'failure_risk': risk,
+            'critical_time': self._find_critical_time(erosion_rate, risk)
+        }
+
+    def _compute_failure_risk(self, eroded_particles: np.ndarray,
+                            bond_health: np.ndarray,
+                            positions: np.ndarray) -> np.ndarray:
+        """Compute failure risk based on erosion and bond health."""
+        # Normalize inputs
+        eroded_norm = eroded_particles / np.max(eroded_particles)
+        health_norm = 1 - bond_health  # Convert to damage
+        
+        # Compute distance from tunnel
+        tunnel_center = self.case_params['tunnel']['center']
+        distances = np.linalg.norm(positions - tunnel_center, axis=1)
+        distance_norm = distances / np.max(distances)
+        
+        # Compute risk factors
+        erosion_risk = eroded_norm
+        bond_risk = health_norm
+        geometry_risk = 1 - distance_norm
+        
+        # Combine risk factors
+        risk = 0.4 * erosion_risk + 0.4 * bond_risk + 0.2 * geometry_risk
+        
+        return risk
+
+    def _find_critical_time(self, erosion_rate: np.ndarray,
+                           risk: np.ndarray) -> float:
+        """Find critical time for failure."""
+        # Find time when erosion rate exceeds threshold
+        erosion_threshold = 0.1 * np.max(erosion_rate)
+        erosion_critical = np.where(erosion_rate > erosion_threshold)[0]
+        
+        # Find time when risk exceeds threshold
+        risk_threshold = 0.8
+        risk_critical = np.where(risk > risk_threshold)[0]
+        
+        # Take the earlier of the two
+        if len(erosion_critical) > 0 and len(risk_critical) > 0:
+            return min(erosion_critical[0], risk_critical[0])
+        elif len(erosion_critical) > 0:
+            return erosion_critical[0]
+        elif len(risk_critical) > 0:
+            return risk_critical[0]
+        else:
+            return -1
+
+    def _create_analysis_plots(self, time: np.ndarray,
+                             eroded_particles: np.ndarray,
+                             bond_health: np.ndarray,
+                             erosion_rate: np.ndarray,
+                             risk: np.ndarray):
+        """Create analysis plots."""
+        # Create figure
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
+        
+        # Plot erosion progress
+        ax1.plot(time, eroded_particles, 'b-')
+        ax1.set_xlabel('Time (s)')
+        ax1.set_ylabel('Number of Eroded Particles')
+        ax1.set_title('Erosion Progress')
+        ax1.grid(True, alpha=0.3)
+        
+        # Plot bond health
+        ax2.plot(time, bond_health, 'r-')
+        ax2.set_xlabel('Time (s)')
+        ax2.set_ylabel('Bond Health')
+        ax2.set_title('Bond Degradation')
+        ax2.grid(True, alpha=0.3)
+        
+        # Plot erosion rate
+        ax3.plot(time, erosion_rate, 'g-')
+        ax3.set_xlabel('Time (s)')
+        ax3.set_ylabel('Erosion Rate (particles/s)')
+        ax3.set_title('Erosion Rate')
+        ax3.grid(True, alpha=0.3)
+        
+        # Plot failure risk
+        ax4.plot(time, risk, 'k-')
+        ax4.set_xlabel('Time (s)')
+        ax4.set_ylabel('Failure Risk')
+        ax4.set_title('Failure Risk Assessment')
+        ax4.grid(True, alpha=0.3)
+        
+        # Save figure
+        plt.tight_layout()
+        plt.savefig(self.output_dir / 'tunnel_inrush_analysis.png')
+        plt.close()
+
+    def generate_case_study_report(self, analysis_results: Dict):
+        """Generate a comprehensive case study report."""
+        report = {
+            'timestamp': str(np.datetime64('now')),
+            'case_parameters': self.case_params,
+            'analysis_results': analysis_results
+        }
+        
+        # Save report
+        with open(self.output_dir / 'tunnel_inrush_report.json', 'w') as f:
+            json.dump(report, f, indent=4)
+        
+        # Generate summary plot
+        plt.figure(figsize=(10, 6))
+        
+        metrics = ['erosion_rate', 'failure_risk']
+        times = np.array(analysis_results['time'])
+        
+        for metric in metrics:
+            plt.plot(times, analysis_results[metric], label=metric)
+        
+        plt.xlabel('Time (s)')
+        plt.ylabel('Value')
+        plt.title('Tunnel Water Inrush Analysis Summary')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        
+        plt.savefig(self.output_dir / 'tunnel_inrush_summary.png')
+        plt.close()
+        
+        self.logger.info("Case study report generated successfully") 
