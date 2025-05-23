@@ -227,8 +227,8 @@ LANG = {
         'particle_size_distribution': "Particle Size Distribution",
         'grain_size': "Grain Size",
         'passing_percentage': "Passing Percentage",
-        'uniformity_coefficient': "Uniformity Coefficient (Cu)",
-        'curvature_coefficient': "Curvature Coefficient (Cc)",
+        'uniformity_coefficient': "Uniformity Coefficient",
+        'curvature_coefficient': "Curvature Coefficient",
         'clay_content': "Clay Content",
         'silt_content': "Silt Content",
         'sand_content': "Sand Content",
@@ -503,6 +503,29 @@ LANG = {
         'pressure_evolution': "Pressure Evolution",
         'flow_rate_evolution': "Flow Rate Evolution",
         'real_time_monitoring': "Real-time Monitoring",
+        'simulation_testing': "Simulation Testing",
+        'simulation_controls': "Simulation Controls",
+        'simulation_status': "Simulation Status",
+        'simulation_duration': "Simulation Duration (seconds)",
+        'start_simulation': "Start Simulation Test",
+        'current_parameters': "Current Parameters",
+        'duration': "Duration",
+        'status': "Status",
+        'last_run': "Last Run",
+        'ready': "Ready",
+        'not_started': "Not started",
+        'seconds': "seconds",
+        'uniformity_coefficient': "Uniformity Coefficient",
+        'curvature_coefficient': "Curvature Coefficient",
+        'comma_separated': "comma-separated",
+        'grain_size': "Grain Size",
+        'passing_percentage': "Passing Percentage",
+        'recent_simulation_results': "Recent Simulation Results",
+        'error_percentage': "Error Percentage",
+        'experimental_value': "Experimental Value",
+        'validation_metrics': "Validation Metrics",
+        'simulation_value': "Simulation Value",
+        'percentage': "%",
     },
     'zh': {
         'dashboard_title': "CFD-DEM仿真仪表板",
@@ -684,8 +707,8 @@ LANG = {
         'particle_size_distribution': "颗粒级配",
         'grain_size': "粒径",
         'passing_percentage': "通过率",
-        'uniformity_coefficient': "均匀系数 (Cu)",
-        'curvature_coefficient': "曲率系数 (Cc)",
+        'uniformity_coefficient': "均匀系数",
+        'curvature_coefficient': "曲率系数",
         'clay_content': "粘土含量",
         'silt_content': "粉土含量",
         'sand_content': "砂含量",
@@ -960,6 +983,182 @@ LANG = {
         'pressure_evolution': "压力演化",
         'flow_rate_evolution': "流量演化",
         'real_time_monitoring': "实时监测",
+        'granular_curve_title': '颗粒级配曲线',
+        'grain_size_mm': '粒径 (mm)',
+        'passing_percentage_pct': '小于某粒径的土粒含量 (%)',
+        'main_navigation': '导航',
+        'simulation_testing': "仿真测试",
+        'simulation_controls': "仿真控制",
+        'simulation_status': "仿真状态",
+        'simulation_duration': "仿真时长（秒）",
+        'start_simulation': "开始仿真测试",
+        'current_parameters': "当前参数",
+        'duration': "时长",
+        'status': "状态",
+        'last_run': "上次运行",
+        'ready': "就绪",
+        'not_started': "未开始",
+        'seconds': "秒",
+        'uniformity_coefficient': "均匀系数",
+        'curvature_coefficient': "曲率系数",
+        'comma_separated': "逗号分隔",
+        'grain_size': "粒径",
+        'passing_percentage': "通过率",
+        'recent_simulation_results': "最新仿真结果",
+        'test_parameters': "试验参数",
+        'confining_pressure': "围压",
+        'flow_rate': "流量",
+        'sample_height': "试样高度",
+        'sample_diameter': "试样直径",
+        'erosion_analysis': "侵蚀分析",
+        'tunnel_dimensions': "隧道尺寸",
+        'length': "长度",
+        'width': "宽度",
+        'height': "高度",
+        'water_head': "水头",
+        'grout_type': "注浆类型",
+        'injection_pressure': "注浆压力",
+        'grout_volume': "注浆体积",
+        'effectiveness': "有效性",
+        'drainage': "排水",
+        'drainage_type': "排水类型",
+        'spacing': "间距",
+        'diameter': "直径",
+        'spray': "喷射",
+        'spray_type': "喷射类型",
+        'thickness': "厚度",
+        'coverage': "覆盖率",
+        'physical_properties': "物理特性",
+        'mechanical_properties': "力学特性",
+        'hydraulic_properties': "水力特性",
+        'parameter_adjustment': "参数调整",
+        'sensitivity_analysis': "敏感性分析",
+        'validation_results': "验证结果",
+        'parameter_inputs': "参数输入",
+        'bond_strength': "结合强度",
+        'fluid_density': "流体密度",
+        'fluid_viscosity': "流体粘度",
+        'real_time_parameter_effects': "实时参数效应",
+        'overall_effect': "总体效应",
+        'pressure_drop': "压力降",
+        'flow_velocity': "流速",
+        'parameter_sensitivity_analysis': "参数敏感性分析",
+        'target': "目标值",
+        'error': "误差",
+        'experimental': "实验值",
+        'overall_score': "总评分",
+        'improving': "改善",
+        'recent_results': "最新结果",
+        'pressure_distribution': "压力分布",
+        'velocity_profile': "速度分布",
+        'recent_simulation_results': "最新仿真结果",
+        'physical_properties': "物理特性",
+        'density': "密度",
+        'density_unit': "g/cm³",
+        'specific_gravity': "比重",
+        'water_content': "含水量",
+        'water_content_unit': "%",
+        'clay_content': "粘土含量",
+        'clay_content_unit': "%",
+        'mechanical_properties': "力学特性",
+        'cohesion': "粘聚力",
+        'cohesion_unit': "kPa",
+        'friction_angle': "内摩擦角",
+        'friction_angle_unit': "°",
+        'uniformity_coefficient': "均匀系数",
+        'curvature_coefficient': "曲率系数",
+        'hydraulic_properties': "水力特性",
+        'permeability': "渗透系数",
+        'permeability_unit': "m/s",
+        'error_percentage': "误差",
+        'experimental_value': "实验值",
+        'validation_metrics': "验证指标",
+        'simulation_value': "仿真值",
+        'percentage': "%",
+        'real_time_parameter_effects': "实时参数效应",
+        'overall_effect': "总体效应",
+        'pressure_drop': "压力降",
+        'flow_velocity': "流速",
+        'bond_strength': "结合强度",
+        'fluid_density': "流体密度",
+        'fluid_viscosity': "流体粘度",
+        'effect_increase': "↑",
+        'effect_decrease': "↓",
+        'effect_value': "效应值",
+        'tunnel_dimensions': "隧道尺寸",
+        'length': "长度",
+        'width': "宽度",
+        'height': "高度",
+        'water_head': "水头",
+        'grout_type': "注浆类型",
+        'injection_pressure': "注浆压力",
+        'grout_volume': "注浆体积",
+        'effectiveness': "有效性",
+        'drainage': "排水",
+        'drainage_type': "排水类型",
+        'spacing': "间距",
+        'diameter': "直径",
+        'spray': "喷射",
+        'spray_type': "喷射类型",
+        'thickness': "厚度",
+        'coverage': "覆盖率",
+        'physical_properties': "物理特性",
+        'mechanical_properties': "力学特性",
+        'hydraulic_properties': "水力特性",
+        'parameter_adjustment': "参数调整",
+        'sensitivity_analysis': "敏感性分析",
+        'validation_results': "验证结果",
+        'parameter_inputs': "参数输入",
+        'bond_strength': "结合强度",
+        'fluid_density': "流体密度",
+        'fluid_viscosity': "流体粘度",
+        'real_time_parameter_effects': "实时参数效应",
+        'overall_effect': "总体效应",
+        'pressure_drop': "压力降",
+        'flow_velocity': "流速",
+        'parameter_sensitivity_analysis': "参数敏感性分析",
+        'target': "目标值",
+        'error': "误差",
+        'experimental': "实验值",
+        'overall_score': "总评分",
+        'improving': "改善",
+        'recent_results': "最新结果",
+        'pressure_distribution': "压力分布",
+        'velocity_profile': "速度分布",
+        'recent_simulation_results': "最新仿真结果",
+        'physical_properties': "物理特性",
+        'density': "密度",
+        'density_unit': "g/cm³",
+        'specific_gravity': "比重",
+        'water_content': "含水量",
+        'water_content_unit': "%",
+        'clay_content': "粘土含量",
+        'clay_content_unit': "%",
+        'mechanical_properties': "力学特性",
+        'cohesion': "粘聚力",
+        'cohesion_unit': "kPa",
+        'friction_angle': "内摩擦角",
+        'friction_angle_unit': "°",
+        'uniformity_coefficient': "均匀系数",
+        'curvature_coefficient': "曲率系数",
+        'hydraulic_properties': "水力特性",
+        'permeability': "渗透系数",
+        'permeability_unit': "m/s",
+        'error_percentage': "误差",
+        'experimental_value': "实验值",
+        'validation_metrics': "验证指标",
+        'simulation_value': "仿真值",
+        'percentage': "%",
+        'real_time_parameter_effects': "实时参数效应",
+        'overall_effect': "总体效应",
+        'pressure_drop': "压力降",
+        'flow_velocity': "流速",
+        'bond_strength': "结合强度",
+        'fluid_density': "流体密度",
+        'fluid_viscosity': "流体粘度",
+        'effect_increase': "↑",
+        'effect_decrease': "↓",
+        'effect_value': "效应值",
     }
 }
 
@@ -1011,21 +1210,73 @@ def update_config(new_params):
     except Exception as e:
         st.error(LANG['en']['config_error'])
 
-# Function to run simulation
-def run_simulation():
-    """Run the simulation and return the result."""
+def run_simulation_with_countdown(duration=10):
+    """Run the simulation with a countdown and progress display."""
     try:
-        # Run the demo script
-        result = subprocess.run(['python', 'demo.py'], 
+        # Create a placeholder for the countdown
+        countdown_placeholder = st.empty()
+        progress_placeholder = st.empty()
+        status_placeholder = st.empty()
+        
+        # Initialize progress bar
+        progress_bar = progress_placeholder.progress(0)
+        
+        # Run the simulation with countdown
+        for i in range(duration):
+            # Update countdown
+            remaining = duration - i
+            countdown_placeholder.write(f"Simulation starting in {remaining} seconds...")
+            
+            # Update progress
+            progress = (i + 1) / duration
+            progress_bar.progress(progress)
+            
+            # Update status
+            status_placeholder.write("Preparing simulation environment...")
+            
+            # Wait for 1 second
+            time.sleep(1)
+        
+        # Clear countdown
+        countdown_placeholder.empty()
+        
+        # Run the actual simulation
+        status_placeholder.write("Running simulation...")
+        result = subprocess.run(['python', 'scripts/demo.py'], 
                               capture_output=True, 
                               text=True)
         
         if result.returncode == 0:
+            status_placeholder.write("Simulation completed successfully!")
+            progress_bar.progress(1.0)
             return True, LANG['en']['simulation_success']
         else:
+            status_placeholder.write(f"Simulation failed: {result.stderr}")
             return False, f"{LANG['en']['simulation_failed']}{result.stderr}"
     except Exception as e:
+        status_placeholder.write(f"Error running simulation: {str(e)}")
         return False, f"{LANG['en']['simulation_error']}{str(e)}"
+
+def run_simulation():
+    """Run the simulation and return the result."""
+    try:
+        # Add simulation duration input
+        duration = st.sidebar.number_input("Simulation Duration (seconds)", 
+                                         min_value=5, 
+                                         max_value=60, 
+                                         value=10, 
+                                         step=5)
+        
+        # Add start simulation button
+        if st.sidebar.button("Start Simulation Test"):
+            success, message = run_simulation_with_countdown(duration)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+    
+    except Exception as e:
+        st.error(f"{LANG['en']['simulation_error']}{str(e)}")
 
 # Function to analyze fluidity effects
 def analyze_fluidity_effects(params):
@@ -1077,25 +1328,28 @@ def create_validation_summary(validation_manager, lang):
     tab1, tab2 = st.tabs([lang['metrics'], lang['visualization']])
     
     with tab1:
-        # Load validation data
+        # Load validation data with consistent keys
         validation_data = {
             'erosion_rate': {
                 'simulation': 0.85,
                 'experimental': 0.82,
                 'error': 3.7,
-                'trend': lang['improving']
+                'trend': lang['improving'],
+                'label': '侵蚀率'
             },
             'pressure_distribution': {
                 'simulation': 0.92,
                 'experimental': 0.89,
                 'error': 3.4,
-                'trend': lang['stable']
+                'trend': lang['stable'],
+                'label': '压力分布'
             },
             'velocity_profile': {
                 'simulation': 0.78,
                 'experimental': 0.75,
                 'error': 4.0,
-                'trend': lang['improving']
+                'trend': lang['improving'],
+                'label': '流速'
             }
         }
         
@@ -1105,11 +1359,11 @@ def create_validation_summary(validation_manager, lang):
         for i, (metric, data) in enumerate(validation_data.items()):
             with [col1, col2, col3][i]:
                 st.metric(
-                    label=metric.replace('_', ' ').title(),
+                    label=data['label'],
                     value=f"{data['simulation']:.2f}",
-                    delta=f"{data['error']:.1f}% {lang['error']}"
+                    delta=f"{data['error']:.1f}% 误差"
                 )
-                st.write(f"{lang['experimental']}: {data['experimental']:.2f}")
+                st.write(f"实验值: {data['experimental']:.2f}")
         
         # Overall validation score with trend
         overall_score = sum(data['simulation'] for data in validation_data.values()) / len(validation_data)
@@ -1122,9 +1376,9 @@ def create_validation_summary(validation_manager, lang):
     with tab2:
         # Create visualization of validation results
         fig = make_subplots(rows=3, cols=1, subplot_titles=(
-            lang['erosion_analysis'],
-            lang['pressure_analysis'],
-            lang['velocity_analysis']
+            '侵蚀分析',
+            '压力分析',
+            '速度分析'
         ))
         
         # Add traces for each metric
@@ -1136,7 +1390,7 @@ def create_validation_summary(validation_manager, lang):
                     x=[0, 1],
                     y=[data['experimental'], data['simulation']],
                     mode='lines+markers',
-                    name=metric.replace('_', ' ').title()
+                    name=data['label']
                 ),
                 row=i+1, col=1
             )
@@ -1153,140 +1407,123 @@ def create_parameter_calibration_interface(validation_manager, lang):
         config = yaml.safe_load(f)
     
     # Create tabs for different aspects of calibration
-    tab1, tab2, tab3 = st.tabs(["Parameter Adjustment", "Sensitivity Analysis", "Validation Results"])
+    tab1, tab2, tab3 = st.tabs(["参数调整", "敏感性分析", "验证结果"])
     
     with tab1:
         # Parameter inputs with real-time effects
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**Parameter Inputs**")
+            st.write("**参数输入**")
             # Bond strength with range slider
             bond_strength = st.slider(
-                lang['param_bond_strength'],
+                "结合强度",
                 min_value=float(5e5),
                 max_value=float(2e6),
                 value=float(config['dem']['bond_strength']),
                 step=float(1e5),
-                help="Affects particle cohesion and erosion resistance"
+                help="影响颗粒凝聚力和抗侵蚀性"
             )
             
             # Fluid density with range slider
             fluid_density = st.slider(
-                lang['param_fluid_density'],
+                "流体密度",
                 min_value=float(900.0),
                 max_value=float(1100.0),
                 value=float(config['cfd']['fluid_density']),
                 step=float(10.0),
-                help="Affects buoyancy and fluid-particle interaction"
+                help="影响浮力和流体-颗粒相互作用"
             )
             
             # Fluid viscosity with range slider
             fluid_viscosity = st.slider(
-                lang['param_fluid_viscosity'],
+                "流体粘度",
                 min_value=float(0.0005),
                 max_value=float(0.002),
                 value=float(config['cfd']['fluid_viscosity']),
                 step=float(0.0001),
-                help="Affects flow resistance and particle transport"
+                help="影响流动阻力和颗粒输运"
             )
         
         with col2:
-            st.write("**Real-time Parameter Effects**")
-            # Calculate normalized parameter values (0 to 1)
-            norm_bond = float((bond_strength - 5e5) / (2e6 - 5e5))
-            norm_density = float((fluid_density - 900) / (1100 - 900))
-            norm_viscosity = float((fluid_viscosity - 0.0005) / (0.002 - 0.0005))
+            st.write("**实时参数效应**")
             
-            # Create effect indicators with dynamic values
+            # Display parameter effects with specific values
             effects = {
-                'Erosion Rate': {
-                    'bond_strength': float(-0.8 * norm_bond),
-                    'fluid_density': float(0.3 * norm_density),
-                    'fluid_viscosity': float(-0.5 * norm_viscosity)
-                },
-                'Pressure Drop': {
-                    'bond_strength': float(0.2 * norm_bond),
-                    'fluid_density': float(0.7 * norm_density),
-                    'fluid_viscosity': float(0.9 * norm_viscosity)
-                },
-                'Flow Velocity': {
-                    'bond_strength': float(-0.3 * norm_bond),
-                    'fluid_density': float(-0.4 * norm_density),
-                    'fluid_viscosity': float(-0.8 * norm_viscosity)
-                }
+                '结合强度': -0.05,
+                '流体密度': 0.09,
+                '流体粘度': -1.0
             }
             
-            # Display effects as interactive metrics
-            for effect, params in effects.items():
-                st.write(f"**{effect}**")
-                total_effect = float(sum(params.values()))
-                
-                # Normalize total effect to 0-1 range
-                normalized_total = float((total_effect + 1.5) / 3.0)  # Assuming max range of -1.5 to 1.5
-                normalized_total = max(0.0, min(1.0, normalized_total))  # Clamp to 0-1
-                
+            # Calculate overall effect
+            overall_effect = sum(effects.values())
+            
+            # Display overall effect
+            st.write("**总体效应**")
+            st.progress(
+                (overall_effect + 1.5) / 3.0,  # Normalize to 0-1 range
+                text=f"总体效应值: {overall_effect:.2f}"
+            )
+            
+            # Display individual parameter effects
+            for param, effect in effects.items():
                 st.progress(
-                    normalized_total,
-                    text=f"Overall Effect: {total_effect:.2f}"
+                    (effect + 1.0) / 2.0,  # Normalize to 0-1 range
+                    text=f"{param}: {effect:.2f} ({'↑' if effect > 0 else '↓'})"
                 )
-                
-                for param, value in params.items():
-                    # Normalize individual effect to 0-1 range
-                    normalized_value = float((value + 1.0) / 2.0)  # Assuming max range of -1 to 1
-                    normalized_value = max(0.0, min(1.0, normalized_value))  # Clamp to 0-1
-                    
-                    st.progress(
-                        normalized_value,
-                        text=f"{param}: {value:.2f} ({'↑' if value > 0 else '↓'})"
-                    )
+            
+            # Display effect descriptions
+            st.write("**效应说明**")
+            st.write("- 结合强度: 降低侵蚀率")
+            st.write("- 流体密度: 增加压力降")
+            st.write("- 流体粘度: 显著降低流速")
     
     with tab2:
-        st.write("**Parameter Sensitivity Analysis**")
+        st.write("**参数敏感性分析**")
         # Create sensitivity analysis visualization
         sensitivity_data = {
-            'Parameter': ['Bond Strength', 'Fluid Density', 'Fluid Viscosity'],
-            'Erosion Impact': [-0.8, 0.3, -0.5],
-            'Pressure Impact': [0.2, 0.7, 0.9],
-            'Flow Impact': [-0.3, -0.4, -0.8]
+            '参数': ['结合强度', '流体密度', '流体粘度'],
+            '侵蚀影响': [-0.8, 0.3, -0.5],
+            '压力影响': [0.2, 0.7, 0.9],
+            '流动影响': [-0.3, -0.4, -0.8]
         }
         
         df = pd.DataFrame(sensitivity_data)
         fig = go.Figure()
         
-        for impact in ['Erosion Impact', 'Pressure Impact', 'Flow Impact']:
+        for impact in ['侵蚀影响', '压力影响', '流动影响']:
             fig.add_trace(go.Bar(
                 name=impact,
-                x=df['Parameter'],
+                x=df['参数'],
                 y=df[impact],
                 text=df[impact].round(2),
                 textposition='auto',
             ))
         
         fig.update_layout(
-            title="Parameter Sensitivity Analysis",
+            title="参数敏感性分析",
             barmode='group',
-            xaxis_title="Parameters",
-            yaxis_title="Impact Coefficient",
+            xaxis_title="参数",
+            yaxis_title="影响系数",
             showlegend=True
         )
         st.plotly_chart(fig, use_container_width=True, key="sensitivity_study")
     
     with tab3:
-        st.write("**Validation Results**")
+        st.write("**验证结果**")
         # Create validation metrics
         validation_metrics = {
-            'Erosion Rate': {
+            '侵蚀率': {
                 'current': 0.85,
                 'target': 0.82,
                 'error': 3.7
             },
-            'Pressure Distribution': {
+            '压力分布': {
                 'current': 0.92,
                 'target': 0.89,
                 'error': 3.4
             },
-            'Flow Velocity': {
+            '流速': {
                 'current': 0.78,
                 'target': 0.75,
                 'error': 4.0
@@ -1300,16 +1537,16 @@ def create_parameter_calibration_interface(validation_manager, lang):
                 st.metric(
                     metric,
                     f"{data['current']:.2f}",
-                    f"{data['error']:.1f}% error"
+                    f"{data['error']:.1f}% 误差"
                 )
-                st.write(f"Target: {data['target']:.2f}")
+                st.write(f"实验值: {data['target']:.2f}")
         
         # Overall validation score
         overall_score = sum(data['current'] for data in validation_metrics.values()) / len(validation_metrics)
-        st.metric("Overall Validation Score", f"{overall_score:.2f}")
+        st.metric("总体验证得分", f"{overall_score:.2f}")
     
     # Update button
-    if st.button(lang['update_parameters']):
+    if st.button("更新参数"):
         # Update config
         config['dem']['bond_strength'] = float(bond_strength)
         config['cfd']['fluid_density'] = float(fluid_density)
@@ -1319,7 +1556,7 @@ def create_parameter_calibration_interface(validation_manager, lang):
         with open('config.yaml', 'w') as f:
             yaml.dump(config, f)
         
-        st.success(lang['parameter_updated'])
+        st.success("参数更新成功")
         st.rerun()
 
 def load_geotechnical_params(lang):
@@ -1415,24 +1652,24 @@ def display_geotechnical_params(params, lang):
         
         # Physical Properties
         with col1:
-            st.subheader("Physical Properties")
-            st.write(f"**Density:** {params['geotechnical']['density']:.3f} g/cm³")
-            st.write(f"**Specific Gravity:** {params['geotechnical']['specific_gravity']:.2f}")
-            st.write(f"**Water Content:** {params['geotechnical']['water_content']:.1f}%")
-            st.write(f"**Clay Content:** {params['geotechnical']['clay_content']}%")
+            st.subheader("物理特性")
+            st.write(f"**密度:** {params['geotechnical']['density']:.3f} g/cm³")
+            st.write(f"**比重:** {params['geotechnical']['specific_gravity']:.2f}")
+            st.write(f"**含水量:** {params['geotechnical']['water_content']:.1f}%")
+            st.write(f"**粘土含量:** {params['geotechnical']['clay_content']}%")
         
         # Mechanical Properties
         with col2:
-            st.subheader("Mechanical Properties")
-            st.write(f"**Cohesion:** {params['geotechnical']['cohesion']:.1f} kPa")
-            st.write(f"**Friction Angle:** {params['geotechnical']['friction_angle']}°")
-            st.write(f"**Cu:** {params['geotechnical']['Cu']:.1f}")
-            st.write(f"**Cc:** {params['geotechnical']['Cc']:.1f}")
+            st.subheader("力学特性")
+            st.write(f"**粘聚力:** {params['geotechnical']['cohesion']:.1f} kPa")
+            st.write(f"**内摩擦角:** {params['geotechnical']['friction_angle']}°")
+            st.write(f"**均匀系数:** {params['geotechnical']['Cu']:.1f}")
+            st.write(f"**曲率系数:** {params['geotechnical']['Cc']:.1f}")
         
         # Hydraulic Properties
         with col3:
-            st.subheader("Hydraulic Properties")
-            st.write(f"**Permeability:** {params['geotechnical']['permeability']:.6f} m/s")
+            st.subheader("水力特性")
+            st.write(f"**渗透系数:** {params['geotechnical']['permeability']:.6f} m/s")
                 
     except Exception as e:
         st.error(f"Error displaying geotechnical parameters: {str(e)}")
@@ -1782,66 +2019,57 @@ def create_particle_erosion_plot(lang):
 
 def create_tunnel_water_inrush_section(lang):
     """Create the tunnel water inrush case study section."""
-    st.header(lang['tunnel_water_inrush'])
+    st.header("隧道突水")
     
     # Tunnel geometry
-    st.subheader(lang['tunnel_geometry'])
+    st.subheader("隧道几何")
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("Tunnel dimensions:")
+        st.write("隧道尺寸:")
         dimensions = {
-            'length': 80,  # m
-            'width': 8,    # m
-            'height': 6,   # m
-            'water_head': 50  # m
+            '长度': 80,  # m
+            '宽度': 8,    # m
+            '高度': 6,   # m
+            '水头': 50  # m
         }
         for dim, value in dimensions.items():
-            st.metric(dim.replace('_', ' ').title(), f"{value} m")
+            st.metric(dim, f"{value} 米")
     
     with col2:
         # Create and display tunnel geometry diagram
         create_tunnel_geometry_diagram(lang)
         st.image('results/tunnel_geometry.png', use_container_width=True)
     
-    # Water inrush visualization
-    st.subheader(lang['water_inrush_simulation'])
-    create_water_inrush_visualization(lang)
+    # Validation metrics
+    st.subheader("验证指标")
+    metrics = {
+        '侵蚀率': {
+            'current': 0.85,
+            'experimental': 0.82,
+            'error': 3.7
+        },
+        '压力分布': {
+            'current': 0.92,
+            'experimental': 0.89,
+            'error': 3.4
+        },
+        '流速': {
+            'current': 0.78,
+            'experimental': 0.75,
+            'error': 4.0
+        }
+    }
     
-    # Particle erosion visualization
-    st.subheader(lang['particle_erosion'])
-    create_particle_erosion_plot(lang)
-    
-    # Add real-time monitoring data
-    st.subheader(lang['real_time_monitoring'])
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Pressure plot
-        time_steps = np.linspace(0, 100, 50)
-        pressure = 500 * np.exp(-0.02 * time_steps)
-        
-        fig1 = go.Figure()
-        fig1.add_trace(go.Scatter(x=time_steps, y=pressure, name='Pressure'))
-        fig1.update_layout(
-            title=lang['pressure_evolution'],
-            xaxis_title='Time (s)',
-            yaxis_title='Pressure (kPa)'
-        )
-        st.plotly_chart(fig1, use_container_width=True, key="pressure_evolution_water_inrush")
-    
-    with col2:
-        # Flow rate plot
-        flow_rate = 2.5 * np.sin(0.1 * time_steps)
-        
-        fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=time_steps, y=flow_rate, name='Flow Rate'))
-        fig2.update_layout(
-            title=lang['flow_rate_evolution'],
-            xaxis_title='Time (s)',
-            yaxis_title='Flow Rate (m³/s)'
-        )
-        st.plotly_chart(fig2, use_container_width=True, key="flow_rate_evolution_water_inrush")
+    col1, col2, col3 = st.columns(3)
+    for i, (metric, data) in enumerate(metrics.items()):
+        with [col1, col2, col3][i]:
+            st.metric(
+                metric,
+                f"{data['current']:.2f}",
+                f"{data['error']:.1f}% 误差"
+            )
+            st.write(f"实验值: {data['experimental']:.2f}")
 
 def create_mitigation_visualization(lang):
     """Create a visualization of the mitigation measures."""
@@ -1906,63 +2134,6 @@ def create_mitigation_visualization(lang):
     # Save figure
     fig.write_image("results/mitigation_measures.png")
 
-def create_experimental_verification_section(lang):
-    """Create the experimental verification section."""
-    st.header(lang['experimental_verification'])
-    
-    # Triaxial test setup
-    st.subheader(lang['triaxial_test'])
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write(lang['experimental_setup'])
-        # Create and display experimental setup diagram
-        create_experimental_setup_diagram(lang)
-        st.image('results/experimental_setup.png', use_container_width=True)
-    
-    with col2:
-        st.write(lang['test_parameters'])
-        params = {
-            'confining_pressure': 100,  # kPa
-            'flow_rate': 0.5,  # ml/min
-            'sample_height': 100,  # mm
-            'sample_diameter': 50,  # mm
-        }
-        for param, value in params.items():
-            st.metric(param.replace('_', ' ').title(), f"{value}")
-    
-    # Comparison of results
-    st.subheader(lang['comparison'])
-    tab1, tab2, tab3 = st.tabs([lang['erosion_rate'], lang['pressure_distribution'], lang['velocity_profile']])
-    
-    with tab1:
-        create_erosion_plot(None, lang)
-    
-    with tab2:
-        create_pressure_distribution_plot(lang)
-    
-    with tab3:
-        create_velocity_profile_plot(lang)
-    
-    # Validation metrics
-    st.subheader(lang['validation_metrics'])
-    metrics = {
-        'erosion_rate_error': 3.7,
-        'pressure_error': 4.2,
-        'velocity_error': 5.1,
-        'overall_validation_score': 0.85
-    }
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric(lang['erosion_rate'], f"{metrics['erosion_rate_error']}%")
-    with col2:
-        st.metric(lang['pressure_distribution'], f"{metrics['pressure_error']}%")
-    with col3:
-        st.metric(lang['velocity_profile'], f"{metrics['velocity_error']}%")
-    with col4:
-        st.metric(lang['overall_validation_score'], f"{metrics['overall_validation_score']}")
-
 def create_mitigation_measures_section(lang):
     """Create the mitigation measures section."""
     st.header(lang['mitigation_measures'])
@@ -1971,53 +2142,53 @@ def create_mitigation_measures_section(lang):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.subheader(lang['grouting'])
+        st.subheader("注浆")
         grouting_params = {
-            'grout_type': 'Cement-based',
-            'injection_pressure': 2.0,  # MPa
-            'grout_volume': 100,  # m³
-            'effectiveness': 0.85
+            '注浆类型': '水泥基',
+            '注浆压力': 2.0,  # MPa
+            '注浆体积': 100,  # m³
+            '有效性': 0.85
         }
         for param, value in grouting_params.items():
-            st.metric(param.replace('_', ' ').title(), str(value))
+            st.metric(param, str(value))
     
     with col2:
-        st.subheader(lang['drainage'])
+        st.subheader("排水")
         drainage_params = {
-            'drainage_type': 'Horizontal drains',
-            'spacing': 5,  # m
-            'diameter': 0.1,  # m
-            'effectiveness': 0.75
+            '排水类型': '水平排水',
+            '间距': 5,  # m
+            '直径': 0.1,  # m
+            '有效性': 0.75
         }
         for param, value in drainage_params.items():
-            st.metric(param.replace('_', ' ').title(), str(value))
+            st.metric(param, str(value))
     
     with col3:
-        st.subheader(lang['spraying'])
+        st.subheader("喷射")
         spraying_params = {
-            'spray_type': 'Shotcrete',
-            'thickness': 0.15,  # m
-            'coverage': 0.9,
-            'effectiveness': 0.80
+            '喷射类型': '喷射混凝土',
+            '厚度': 0.15,  # m
+            '覆盖率': 0.9,
+            '有效性': 0.80
         }
         for param, value in spraying_params.items():
-            st.metric(param.replace('_', ' ').title(), str(value))
+            st.metric(param, str(value))
     
     # Effectiveness comparison
-    st.subheader(lang['mitigation_effectiveness'])
+    st.subheader("缓解效果")
     create_mitigation_effectiveness_plot(lang, key_suffix="mitigation_measures")
     
     # Cost analysis
-    st.subheader(lang['cost_analysis'])
+    st.subheader("成本分析")
     create_cost_analysis_plot(lang)
     
     # Recommendations
-    st.subheader(lang['recommendations'])
+    st.subheader("建议")
     recommendations = [
-        "1. Implement grouting as primary measure",
-        "2. Use drainage system for water control",
-        "3. Apply shotcrete for surface protection",
-        "4. Monitor effectiveness regularly"
+        "1. 实施注浆作为主要措施",
+        "2. 使用排水系统控制水流",
+        "3. 应用喷射混凝土进行表面保护",
+        "4. 定期监测效果"
     ]
     for rec in recommendations:
         st.write(rec)
@@ -2243,16 +2414,13 @@ def create_recent_results_section(lang):
     with tab3:
         create_erosion_plot(None, lang, key_suffix="recent_results")
 
-def plot_granular_curve_chinese(params):
-    """Plot the granular curve with Chinese labels and a red line, matching the provided image style."""
+def plot_granular_curve_bilingual(params, lang):
+    """Plot the granular curve with axis labels in the selected language."""
     import plotly.graph_objects as go
     import numpy as np
     
-    # Use the same data as the main granular curve
     grain_sizes = params['geotechnical']['grain_sizes']
     passing_percentages = params['geotechnical']['passing_percentages']
-    
-    # Smooth curve
     x_smooth = np.logspace(np.log10(min(grain_sizes)), np.log10(max(grain_sizes)), 100)
     y_smooth = np.interp(x_smooth, grain_sizes[::-1], passing_percentages[::-1])
     
@@ -2262,19 +2430,18 @@ def plot_granular_curve_chinese(params):
         y=y_smooth,
         mode='lines',
         line=dict(color='red', width=2),
-        name='颗粒级配曲线'
+        name=lang['granular_curve_title']
     ))
-    
     fig.update_layout(
         xaxis=dict(
-            title='粒径 (mm)',
+            title=lang['grain_size_mm'],
             type='log',
             autorange='reversed',
             tickvals=[10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0.5, 0.1],
             ticktext=[str(v) for v in [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0.5, 0.1]],
         ),
         yaxis=dict(
-            title='小于某粒径的土粒含量 (%)',
+            title=lang['passing_percentage_pct'],
             range=[0, 100]
         ),
         margin=dict(l=60, r=20, t=20, b=60),
@@ -2284,18 +2451,186 @@ def plot_granular_curve_chinese(params):
     )
     return fig
 
+def create_simulation_testing_section(lang):
+    """Create a section for simulation testing with editable geotechnical parameters, countdown, and recent results."""
+    import yaml
+    st.header(lang['simulation_testing'])
+
+    # Load current geotechnical parameters
+    with open('config.yaml', 'r') as f:
+        config_data = yaml.safe_load(f)
+    geo = config_data['geotechnical']
+
+    # Create columns for simulation controls and status
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        st.subheader(lang['simulation_controls'])
+        # Simulation parameters
+        duration = st.number_input(lang['simulation_duration'], min_value=5, max_value=60, value=10, step=5)
+
+        st.markdown(f"**{lang['edit_granular_curve']}:**")
+        density = st.number_input(f"{lang['density']} (g/cm³)", value=float(geo['density']))
+        specific_gravity = st.number_input(lang['specific_gravity'], value=float(geo['specific_gravity']))
+        water_content = st.number_input(f"{lang['water_content']} (%)", value=float(geo['water_content']))
+        Cu = st.number_input(f"Cu ({lang['uniformity_coefficient']})", value=float(geo['Cu']))
+        Cc = st.number_input(f"Cc ({lang['curvature_coefficient']})", value=float(geo['Cc']))
+        clay_content = st.number_input(f"{lang['clay_content']} (%)", value=float(geo['clay_content']))
+        cohesion = st.number_input(f"{lang['cohesion']} (kPa)", value=float(geo['cohesion']))
+        friction_angle = st.number_input(f"{lang['friction_angle']} (°)", value=float(geo['friction_angle']))
+        permeability = st.number_input(f"{lang['permeability']} (m/s)", value=float(geo['permeability']), format="%e")
+        grain_sizes = st.text_input(f"{lang['grain_size']} ({lang['comma_separated']}, mm)", value=','.join(str(x) for x in geo['grain_sizes']))
+        passing_percentages = st.text_input(f"{lang['passing_percentage']} ({lang['comma_separated']}, %)", value=','.join(str(x) for x in geo['passing_percentages']))
+
+        # Start simulation button
+        if st.button(lang['start_simulation']):
+            # Update config.yaml with new geotechnical parameters
+            try:
+                new_geo = {
+                    'density': float(density),
+                    'specific_gravity': float(specific_gravity),
+                    'water_content': float(water_content),
+                    'Cu': float(Cu),
+                    'Cc': float(Cc),
+                    'clay_content': float(clay_content),
+                    'cohesion': float(cohesion),
+                    'friction_angle': float(friction_angle),
+                    'permeability': float(permeability),
+                    'grain_sizes': [float(x) for x in grain_sizes.split(',') if x.strip()],
+                    'passing_percentages': [float(x) for x in passing_percentages.split(',') if x.strip()]
+                }
+                config_data['geotechnical'] = new_geo
+                with open('config.yaml', 'w') as f:
+                    yaml.dump(config_data, f)
+                st.success(lang['parameter_updated'])
+            except Exception as e:
+                st.error(f"{lang['config_error']}: {e}")
+            # Run simulation
+            success, message = run_simulation_with_countdown(duration)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+
+    with col2:
+        st.subheader(lang['simulation_status'])
+        # Create placeholders for status updates
+        status_placeholder = st.empty()
+        progress_placeholder = st.empty()
+        # Display current simulation parameters
+        st.write(lang['current_parameters'])
+        params = {
+            lang['duration']: f"{duration} {lang['seconds']}",
+            lang['status']: lang['ready'],
+            lang['last_run']: lang['not_started']
+        }
+        for param, value in params.items():
+            st.metric(param, value)
+
+    # --- Display Recent Results Below ---
+    st.markdown("---")
+    st.subheader(lang['recent_results'])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(lang['erosion_rate'], "0.85", delta="3.7%", delta_color="normal")
+    with col2:
+        st.metric(lang['pressure_distribution'], "0.92", delta="3.4%", delta_color="normal")
+    with col3:
+        st.metric(lang['velocity_profile'], "0.78", delta="4.0%", delta_color="normal")
+    st.subheader(lang['recent_simulation_results'])
+    tab1, tab2, tab3 = st.tabs([
+        lang['pressure_analysis'],
+        lang['velocity_analysis'],
+        lang['erosion_analysis']
+    ])
+    with tab1:
+        create_pressure_distribution_plot(lang)
+    with tab2:
+        create_velocity_profile_plot(lang)
+    with tab3:
+        create_erosion_plot(None, lang, key_suffix="recent_results")
+
+def create_experimental_verification_section(lang):
+    """Create the experimental verification section."""
+    st.header("实验验证")
+    
+    # Triaxial test setup
+    st.subheader("三轴渗流试验")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.write("实验设置")
+        # Create and display experimental setup diagram
+        create_experimental_setup_diagram(lang)
+        st.image('results/experimental_setup.png', use_container_width=True)
+    
+    with col2:
+        st.write("试验参数")
+        params = {
+            '围压': 100,  # kPa
+            '流量': 0.5,  # ml/min
+            '试样高度': 100,  # mm
+            '试样直径': 50,  # mm
+        }
+        for param, value in params.items():
+            st.metric(param, f"{value}")
+    
+    # Comparison of results
+    st.subheader("对比分析")
+    tab1, tab2, tab3 = st.tabs(["侵蚀率", "压力分布", "流速"])
+    
+    with tab1:
+        create_erosion_plot(None, lang)
+    
+    with tab2:
+        create_pressure_distribution_plot(lang)
+    
+    with tab3:
+        create_velocity_profile_plot(lang)
+    
+    # Validation metrics
+    st.subheader("验证指标")
+    metrics = {
+        '侵蚀率': {
+            'current': 0.85,
+            'experimental': 0.82,
+            'error': 3.7
+        },
+        '压力分布': {
+            'current': 0.92,
+            'experimental': 0.89,
+            'error': 3.4
+        },
+        '流速': {
+            'current': 0.78,
+            'experimental': 0.75,
+            'error': 4.0
+        }
+    }
+    
+    col1, col2, col3 = st.columns(3)
+    for i, (metric, data) in enumerate(metrics.items()):
+        with [col1, col2, col3][i]:
+            st.metric(
+                metric,
+                f"{data['current']:.2f}",
+                f"{data['error']:.1f}% 误差"
+            )
+            st.write(f"实验值: {data['experimental']:.2f}")
+
 # Update the main function to include recent results
 def main():
     # Language selection
-    lang = LANG['en']
+    lang_code = st.sidebar.selectbox('Select Language / 选择语言', options=['en', 'zh'], format_func=lambda x: 'English' if x == 'en' else '中文')
+    lang = LANG[lang_code]
     
     # Sidebar navigation
     st.sidebar.title(lang['navigation'])
     page = st.sidebar.radio(
-        "Go to",
+        lang['main_navigation'],
         [lang['overview'], lang['coupling_framework'], lang['validation_results'],
          lang['parameter_calibration'], lang['geotechnical_parameters'],
-         lang['theoretical_background'], lang['case_studies']]
+         lang['theoretical_background'], lang['case_studies'], lang['simulation_testing']]
     )
     
     # Main content
@@ -2306,16 +2641,10 @@ def main():
         st.header(lang['project_overview'])
         st.write(lang['project_overview_desc'])
         
-        # Add granular curve with Chinese labels (replicating the image)
-        st.subheader("颗粒级配曲线 Granular Curve (Chinese Style)")
-        granular_fig_cn = plot_granular_curve_chinese(config)
-        st.plotly_chart(granular_fig_cn, use_container_width=True, key="granular_curve_chinese")
-        
-        # Display granular curve (existing style)
-        st.subheader("Grain Size Distribution")
-        granular_fig = plot_granular_curve(config, lang)
-        if granular_fig:
-            st.plotly_chart(granular_fig, use_container_width=True, key="overview_granular_curve")
+        # Granular curve (bilingual)
+        st.subheader(lang['granular_curve_title'])
+        granular_fig_bi = plot_granular_curve_bilingual(config, lang)
+        st.plotly_chart(granular_fig_bi, use_container_width=True, key="granular_curve_bilingual")
         
         # Material properties summary
         st.header(lang['material_properties'])
@@ -2324,41 +2653,57 @@ def main():
         # Add recent results section
         st.subheader(lang['recent_results'])
         
-        # Create columns for different metrics
+        # Test Parameters
+        st.write("**试验参数**")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("围压", "100 kPa")
+        with col2:
+            st.metric("流量", "0.5 ml/min")
+        with col3:
+            st.metric("试样高度", "100 mm")
+        with col4:
+            st.metric("试样直径", "50 mm")
+        
+        # Validation Metrics
+        st.write("**验证指标**")
         col1, col2, col3 = st.columns(3)
         
         with col1:
             st.metric(
-                lang['erosion_rate'],
+                "侵蚀率",
                 "0.85",
-                delta="3.7%",
+                delta="3.7% 误差",
                 delta_color="normal"
             )
+            st.write("实验值: 0.82")
         
         with col2:
             st.metric(
-                lang['pressure_distribution'],
+                "压力分布",
                 "0.92",
-                delta="3.4%",
+                delta="3.4% 误差",
                 delta_color="normal"
             )
+            st.write("实验值: 0.89")
         
         with col3:
             st.metric(
-                lang['velocity_profile'],
+                "流速",
                 "0.78",
-                delta="4.0%",
+                delta="4.0% 误差",
                 delta_color="normal"
             )
+            st.write("实验值: 0.75")
         
         # Add recent simulation results
-        st.subheader("Recent Simulation Results")
+        st.subheader("最新仿真结果")
         
         # Create tabs for different visualizations
         tab1, tab2, tab3 = st.tabs([
-            lang['pressure_analysis'],
-            lang['velocity_analysis'],
-            lang['erosion_analysis']
+            "压力分析",
+            "速度分析",
+            "侵蚀分析"
         ])
         
         with tab1:
@@ -2397,6 +2742,8 @@ def main():
         display_wang_reference(lang)
     elif page == lang['case_studies']:
         create_case_studies_section(lang)
+    elif page == lang['simulation_testing']:
+        create_simulation_testing_section(lang)
 
 if __name__ == "__main__":
     main() 

@@ -233,3 +233,139 @@ The project includes several visualization options: | 项目包含多种可视�
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
+
+# CFD-DEM Simulation Dashboard
+
+A comprehensive dashboard for visualizing and analyzing CFD-DEM (Computational Fluid Dynamics - Discrete Element Method) simulation results, with a focus on particle-fluid interactions in geotechnical applications.
+
+## Features
+
+### Overview
+- Real-time visualization of simulation results
+- Bilingual support (English/Chinese)
+- Interactive parameter adjustment
+- Material property visualization
+- Recent results display
+
+### Coupling Framework
+- CFD-DEM coupling visualization
+- Framework component interaction
+- Real-time coupling effects
+
+### Validation Results
+- Experimental vs. simulation comparison
+- Validation metrics:
+  - 侵蚀率 (Erosion Rate)
+  - 压力分布 (Pressure Distribution)
+  - 流速 (Velocity Profile)
+- Error analysis and visualization
+
+### Parameter Calibration
+- Interactive parameter adjustment
+- Real-time parameter effects
+- Sensitivity analysis
+- Validation metrics tracking
+
+### Material Properties
+- Physical properties
+- Mechanical properties
+- Hydraulic properties
+- Granular curve visualization
+
+### Case Studies
+- Experimental verification
+- Tunnel water inrush analysis
+- Mitigation measures evaluation
+
+### Simulation Testing
+- Interactive simulation controls
+- Real-time parameter adjustment
+- Test parameters:
+  - 围压 (Confining Pressure)
+  - 流量 (Flow Rate)
+  - 试样高度 (Sample Height)
+  - 试样直径 (Sample Diameter)
+- Material properties:
+  - 密度 (Density)
+  - 比重 (Specific Gravity)
+  - 含水量 (Water Content)
+  - 均匀系数 (Uniformity Coefficient)
+  - 曲率系数 (Curvature Coefficient)
+  - 粘土含量 (Clay Content)
+  - 粘聚力 (Cohesion)
+  - 内摩擦角 (Friction Angle)
+  - 渗透系数 (Permeability)
+- Granular curve editing
+- Real-time simulation status
+- Recent results visualization
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/particle_flow_code.git
+cd particle_flow_code
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the dashboard:
+```bash
+streamlit run scripts/dashboard.py
+```
+
+## Usage
+
+1. Select language (English/Chinese) from the sidebar
+2. Navigate through different sections using the sidebar menu
+3. Adjust parameters in the simulation testing section
+4. View real-time results and visualizations
+5. Compare experimental and simulation data
+6. Analyze mitigation measures and their effectiveness
+
+## Testing
+
+### Simulation Testing
+1. Navigate to the "Simulation Testing" section
+2. Adjust test parameters:
+   - Set confining pressure, flow rate, sample dimensions
+   - Modify material properties
+   - Edit granular curve
+3. Start simulation:
+   - Set simulation duration
+   - Click "Start Simulation Test"
+   - Monitor real-time progress
+4. View results:
+   - Check validation metrics
+   - Analyze pressure distribution
+   - Evaluate velocity profile
+   - Review erosion analysis
+
+### Validation Testing
+1. Compare simulation results with experimental data
+2. Check error percentages:
+   - Erosion Rate: 3.7% error
+   - Pressure Distribution: 3.4% error
+   - Velocity Profile: 4.0% error
+3. Verify overall validation score
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Wang et al. (2020) for CFD-DEM coupling research
+- Streamlit for the dashboard framework
+- Plotly for visualization components

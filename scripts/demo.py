@@ -38,24 +38,39 @@ def demonstrate_bond_model():
         'erosion': {
             'erosion_rate_coefficient': 1.0e-6,
             'critical_shear_stress': 1.0
+        },
+        'geotechnical': {
+            'clay_content': 10.02,
+            'water_content': 8.09,
+            'Cu': 7.9,
+            'Cc': 1.51,
+            'cohesion': 17.53,
+            'permeability': 1.1e-6,
+            'density': 1.975,
+            'specific_gravity': 2.65
         }
     }
     bond_model = SeepageBondModel(config)
     
     # Simulate bond degradation
     time_steps = np.linspace(0, 10, 100)
-    fluid_velocity = np.array([0.5 * np.sin(t) for t in time_steps])
-    pressure_gradient = np.array([1.0e5] * len(time_steps))
+    dt = time_steps[1] - time_steps[0]  # Time step size
+    
+    # Create 3D velocity and pressure gradient arrays
+    fluid_velocity = np.array([[0.5 * np.sin(t), 0.0, 0.0] for t in time_steps])
+    pressure_gradient = np.array([[1.0e5, 0.0, 0.0] for _ in time_steps])
+    
     bond_radius = 0.01
     current_strength = 1.0e6
     
     bond_strength = []
     for t, v, p in zip(time_steps, fluid_velocity, pressure_gradient):
         _, strength = bond_model.compute_bond_degradation(
-            np.array([v, 0, 0]),
-            np.array([p, 0, 0]),
+            v,  # 3D velocity vector
+            p,  # 3D pressure gradient vector
             bond_radius,
-            current_strength
+            current_strength,
+            dt  # Use constant time step
         )
         bond_strength.append(strength)
         current_strength = strength
@@ -63,7 +78,7 @@ def demonstrate_bond_model():
     # Visualize results
     plt.figure(figsize=(10, 6))
     plt.plot(time_steps, bond_strength, 'b-', label='Bond Strength')
-    plt.plot(time_steps, fluid_velocity, 'r--', label='Fluid Velocity')
+    plt.plot(time_steps, fluid_velocity[:, 0], 'r--', label='Fluid Velocity')
     plt.xlabel('Time (s)')
     plt.ylabel('Strength (Pa)')
     plt.title('Bond Degradation Under Fluid Flow')
@@ -96,6 +111,18 @@ def demonstrate_coarse_grained():
         },
         'output': {
             'directory': 'results'
+        },
+        'geotechnical': {
+            'clay_content': 10.02,
+            'water_content': 8.09,
+            'Cu': 7.9,
+            'Cc': 1.51,
+            'cohesion': 17.53,
+            'permeability': 1.1e-6,
+            'density': 1.975,
+            'specific_gravity': 2.65,
+            'porosity': 0.31,
+            'void_ratio': 0.45
         }
     }
     
