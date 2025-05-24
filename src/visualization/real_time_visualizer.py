@@ -21,9 +21,12 @@ class RealTimeVisualizer:
             'output': ['directory', 'visualization_interval']
         }
         
+        # Iterate through each section and its required parameters in the configuration
         for section, params in required_params.items():
+            # Check if the section exists in the config dictionary
             if section not in config:
                 raise ValueError(f"Missing configuration section: {section}")
+            # Check if each required parameter exists within the section
             for param in params:
                 if param not in config[section]:
                     raise ValueError(f"Missing parameter {param} in {section} section")
