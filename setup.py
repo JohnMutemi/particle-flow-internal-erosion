@@ -7,7 +7,8 @@ from setuptools import setup, find_packages
 setup(
     name="particle_flow",
     version="0.1.0",
-    packages=find_packages(),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     install_requires=[
         "numpy>=1.20.0",
         "matplotlib>=3.4.0",
@@ -19,7 +20,7 @@ setup(
     author="Your Name",
     author_email="your.email@example.com",
     description="A CFD-DEM coupling framework for particle flow simulation",
-    long_description=open("README.md").read(),
+    long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/particle_flow",
     classifiers=[
@@ -32,4 +33,4 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: Physics"
     ]
-) 
+)

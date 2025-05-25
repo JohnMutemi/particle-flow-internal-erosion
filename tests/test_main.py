@@ -5,7 +5,8 @@ Tests for the main simulation module.
 import pytest
 import yaml
 from pathlib import Path
-from src.main import load_config, initialize_simulation, run_simulation
+from particle_flow.main import load_config, initialize_simulation, run_simulation
+
 
 @pytest.fixture
 def config_file(tmp_path):
@@ -49,11 +50,12 @@ def config_file(tmp_path):
             'visualization_interval': 2
         }
     }
-    
+
     config_path = tmp_path / "test_config.yaml"
     with open(config_path, 'w') as f:
         yaml.dump(config, f)
     return config_path
+
 
 def test_config_loading(config_file):
     """Test configuration loading from file."""
@@ -64,35 +66,38 @@ def test_config_loading(config_file):
     assert config['cfd']['fluid_density'] == 1000.0
     assert config['erosion']['critical_shear_stress'] == 0.1
 
+
 def test_simulation_initialization(config_file):
     """Test simulation initialization."""
     config = load_config(config_file)
     dem_solver, cfd_solver, erosion_model = initialize_simulation(config)
-    
+
     # Check that all components are initialized
     assert dem_solver is not None
     assert cfd_solver is not None
     assert erosion_model is not None
-    
+
     # Check particle initialization
     particle_data = dem_solver.get_particle_data()
-    assert len(particle_data['positions']) == config['simulation']['initial_particles']
-    
+    assert len(particle_data['positions']
+               ) == config['simulation']['initial_particles']
+
     # Check fluid field initialization
     fluid_data = cfd_solver.get_fluid_data()
     assert fluid_data['velocity_field'] is not None
     assert fluid_data['pressure_field'] is not None
 
+
 def test_simulation_run(config_file):
     """Test running the simulation for a few steps."""
     config = load_config(config_file)
     dem_solver, cfd_solver, erosion_model = initialize_simulation(config)
-    
+
     # Run simulation for a few steps
     run_simulation(dem_solver, cfd_solver, erosion_model, config)
-    
+
     # Check that simulation progressed
     particle_data = dem_solver.get_particle_data()
     fluid_data = cfd_solver.get_fluid_data()
-    
-    # Add more specific assertions once the simulation components are fully implemented 
+
+    # Add more specific assertions once the simulation components are fully implemented

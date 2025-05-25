@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from src.erosion.model import ErosionModel
 
+
 @pytest.fixture
 def config():
     """Test configuration fixture."""
@@ -18,6 +19,7 @@ def config():
         }
     }
 
+
 def test_erosion_model_initialization(config):
     """Test erosion model initialization."""
     model = ErosionModel(config)
@@ -25,6 +27,7 @@ def test_erosion_model_initialization(config):
     assert model.erosion_rate_coefficient == config['erosion']['erosion_rate_coefficient']
     assert model.transport_capacity == config['erosion']['transport_capacity']
     assert model.deposition_rate == config['erosion']['deposition_rate']
+
 
 def test_shear_stress_computation(config):
     """Test shear stress computation."""
@@ -35,20 +38,23 @@ def test_shear_stress_computation(config):
     assert isinstance(shear_stress, float)
     assert shear_stress >= 0.0
 
+
 def test_erosion_rate_computation(config):
     """Test erosion rate computation."""
     model = ErosionModel(config)
-    
+
     # Test below critical shear stress
     shear_stress_below = 0.05
     rate_below = model.compute_erosion_rate(shear_stress_below)
     assert rate_below == 0.0
-    
+
     # Test above critical shear stress
     shear_stress_above = 0.15
     rate_above = model.compute_erosion_rate(shear_stress_above)
-    expected_rate = model.erosion_rate_coefficient * (shear_stress_above - model.critical_shear_stress)
+    expected_rate = model.erosion_rate_coefficient * \
+        (shear_stress_above - model.critical_shear_stress)
     assert rate_above == expected_rate
+
 
 def test_transport_computation(config):
     """Test particle transport computation."""
@@ -59,6 +65,7 @@ def test_transport_computation(config):
     assert isinstance(transport_rate, float)
     assert transport_rate >= 0.0
 
+
 def test_deposition_computation(config):
     """Test particle deposition computation."""
     model = ErosionModel(config)
@@ -68,6 +75,7 @@ def test_deposition_computation(config):
     assert isinstance(deposition_rate, float)
     assert deposition_rate >= 0.0
 
+
 def test_particle_mass_update(config):
     """Test particle mass update."""
     model = ErosionModel(config)
@@ -76,7 +84,7 @@ def test_particle_mass_update(config):
     transport_rate = 0.05
     deposition_rate = 0.02
     time_step = 0.001
-    
+
     new_mass = model.update_particle_mass(
         initial_mass,
         erosion_rate,
@@ -84,6 +92,7 @@ def test_particle_mass_update(config):
         deposition_rate,
         time_step
     )
-    
-    expected_change = (erosion_rate - transport_rate - deposition_rate) * time_step
+
+    expected_change = (erosion_rate - transport_rate -
+                       deposition_rate) * time_step
     assert abs(new_mass - (initial_mass + expected_change)) < 1e-10

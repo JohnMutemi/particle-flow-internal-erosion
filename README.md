@@ -2,7 +2,7 @@
 
 A comprehensive Computational Fluid Dynamics (CFD) and Discrete Element Method (DEM) coupling framework for simulating particle-fluid interactions, with a focus on tunnel water inrush scenarios. This project implements an advanced CFD-DEM coupling framework for simulating fluid-particle interactions in geotechnical applications, featuring a novel constitutive model for particle bonding that accounts for seepage erosion effects, along with a coarse-grained approach for large-scale simulations.
 
-一个全面的计算流体动力学(CFD)和离散元方法(DEM)耦合框架，用于模拟颗粒-流体相互作用，特别关注隧道突水场景。本项目实现了一个先进的CFD-DEM耦合框架，用于模拟岩土工程应用中的流体-颗粒相互作用，具有考虑渗流侵蚀效应的新型颗粒粘结本构模型，以及用于大规模模拟的粗粒化方法。
+一个全面的计算流体动力学(CFD)和离散元方法(DEM)耦合框架，用于模拟颗粒-流体相互作用，特别关注隧道突水场景。本项目实现了一个先进的 CFD-DEM 耦合框架，用于模拟岩土工程应用中的流体-颗粒相互作用，具有考虑渗流侵蚀效应的新型颗粒粘结本构模型，以及用于大规模模拟的粗粒化方法。
 
 ## Project Structure | 项目结构
 
@@ -55,24 +55,27 @@ particle_flow_code/
   - SciPy: For scientific computing | 用于科学计算
   - Matplotlib: For plotting and visualization | 用于绘图和可视化
   - scikit-learn: For machine learning and clustering | 用于机器学习和聚类
-  - PyVista: For 3D visualization | 用于3D可视化
+  - PyVista: For 3D visualization | 用于 3D 可视化
 
 ## Installation | 安装
 
 ### Prerequisites | 前提条件
-- Python 3.8 or higher | Python 3.8或更高版本
+
+- Python 3.8 or higher | Python 3.8 或更高版本
 - Git
-- pip (Python package manager) | pip (Python包管理器)
+- pip (Python package manager) | pip (Python 包管理器)
 
 ### Setup Steps | 设置步骤
 
 1. **Clone the Repository | 克隆仓库**
+
    ```bash
    git clone https://github.com/JohnMutemi/particle-flow-internal-erosion.git
    cd particle-flow-internal-erosion
    ```
 
 2. **Create and Activate Virtual Environment | 创建并激活虚拟环境**
+
    ```bash
    # Create virtual environment | 创建虚拟环境
    python -m venv .venv
@@ -85,6 +88,7 @@ particle_flow_code/
    ```
 
 3. **Install Dependencies | 安装依赖**
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -99,29 +103,36 @@ particle_flow_code/
 ### Running Simulations | 运行模拟
 
 1. **Basic Simulation | 基本模拟**
+
    ```bash
-   python demo.py
+   python scripts/demo.py
    ```
+
    This will: | 这将：
+
    - Demonstrate the bond model | 演示粘结模型
    - Show coarse-grained modeling | 展示粗粒化建模
-   - Run CFD-DEM coupling | 运行CFD-DEM耦合
+   - Run CFD-DEM coupling | 运行 CFD-DEM 耦合
    - Perform validation | 执行验证
 
 2. **Interactive Dashboard | 交互式仪表板**
+
    ```bash
-   streamlit run dashboard.py
+   streamlit run scripts/dashboard.py
    ```
+
    The dashboard provides: | 仪表板提供：
+
    - Interactive parameter modification | 交互式参数修改
    - Real-time visualization | 实时可视化
    - Detailed analysis of fluidity effects | 流动性效应详细分析
    - Validation results | 验证结果
 
 3. **Custom Simulation | 自定义模拟**
+
    ```python
    from src.main import Simulation
-   
+
    sim = Simulation(config_path='config.yaml')
    sim.run()
    ```
@@ -131,10 +142,12 @@ particle_flow_code/
 The project includes several visualization options: | 项目包含多种可视化选项：
 
 1. **Real-time Visualization | 实时可视化**
+
    - Available through the dashboard interface | 通过仪表板界面可用
    - Supports particle tracking and flow field visualization | 支持颗粒追踪和流场可视化
 
 2. **Results Analysis | 结果分析**
+
    - Access through the dashboard's analysis section | 通过仪表板的分析部分访问
    - Includes fluidity parameters, interaction analysis, and stability metrics | 包括流动性参数、相互作用分析和稳定性指标
 
@@ -146,7 +159,9 @@ The project includes several visualization options: | 项目包含多种可视�
 ### Dashboard Deployment | 仪表板部署
 
 #### Local Deployment | 本地部署
+
 1. Install the required dependencies: | 安装所需依赖：
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -156,8 +171,10 @@ The project includes several visualization options: | 项目包含多种可视�
    streamlit run dashboard.py
    ```
 
-#### Streamlit Cloud Deployment | Streamlit云部署
-1. Create a GitHub repository and push your code: | 创建GitHub仓库并推送代码：
+#### Streamlit Cloud Deployment | Streamlit 云部署
+
+1. Create a GitHub repository and push your code: | 创建 GitHub 仓库并推送代码：
+
    ```bash
    git init
    git add .
@@ -175,6 +192,7 @@ The project includes several visualization options: | 项目包含多种可视�
 ## Theoretical Background | 理论基础
 
 ### 1. Constitutive Model Development | 本构模型开发
+
 - **Innovation**: New constitutive model for particle bonding | 创新：新型颗粒粘结本构模型
 - **Features**: | 特点：
   - Seepage erosion effects | 渗流侵蚀效应
@@ -182,13 +200,15 @@ The project includes several visualization options: | 项目包含多种可视�
   - Parallel bond model integration | 平行粘结模型集成
 
 ### 2. Coarse-Grained Technology | 粗粒化技术
+
 - **Purpose**: Enable large-scale engineering simulations | 目的：实现大规模工程模拟
 - **Features**: | 特点：
   - Scaled particle interactions | 缩放颗粒相互作用
   - Parameter calibration | 参数校准
   - Validation against fine-scale models | 与精细尺度模型验证
 
-### 3. CFD-DEM Coupling | CFD-DEM耦合
+### 3. CFD-DEM Coupling | CFD-DEM 耦合
+
 - **Framework**: Integrated fluid-particle interaction | 框架：集成流体-颗粒相互作用
 - **Components**: | 组件：
   - Fluid flow simulation (CFD) | 流体流动模拟(CFD)
@@ -196,27 +216,50 @@ The project includes several visualization options: | 项目包含多种可视�
   - Erosion and degradation mechanisms | 侵蚀和退化机制
 
 ### 4. Validation and Case Studies | 验证和案例研究
+
 - **Experimental Verification**: | 实验验证：
   - Seepage erosion tests | 渗流侵蚀测试
-  - Comparison with numerical results | 与数值结果比较
-- **Case Studies**: | 案例研究：
+  - Three-axis seepage simulation | 三轴渗流模拟
   - Tunnel water inrush scenarios | 隧道突水场景
-  - Large-scale engineering applications | 大规模工程应用
+
+### 5. Three-Axis Seepage Simulation | 三轴渗流模拟
+
+- **Purpose**: | 目的：
+
+  - Comprehensive analysis of seepage effects in three dimensions | 三维渗流效应的综合分析
+  - Study of anisotropic flow behavior | 各向异性流动行为研究
+  - Evaluation of structural stability under multi-directional flow | 多向流动下的结构稳定性评估
+
+- **Features**: | 特点：
+
+  - Multi-directional flow simulation | 多向流动模拟
+  - Anisotropic permeability analysis | 各向异性渗透性分析
+  - Stress-strain relationship under seepage | 渗流条件下的应力-应变关系
+  - Pore pressure distribution visualization | 孔隙压力分布可视化
+
+- **Applications**: | 应用：
+  - Geotechnical engineering | 岩土工程
+  - Underground construction | 地下工程
+  - Slope stability analysis | 边坡稳定性分析
+  - Dam safety assessment | 大坝安全评估
 
 ## Key Features
 
 1. **Interactive Parameter Studies**
+
    - Real-time parameter modification
    - Immediate visualization of effects
    - Comprehensive analysis tools
 
 2. **Advanced Visualization**
+
    - Flow patterns
    - Particle behavior
    - Bond degradation
    - Statistical analysis
 
 3. **Validation Framework**
+
    - Experimental data comparison
    - Statistical validation
    - Sensitivity analysis
@@ -239,3 +282,21 @@ The project includes several visualization options: | 项目包含多种可视�
 - Wang et al. (2020) for CFD-DEM coupling research
 - Streamlit for the dashboard framework
 - Plotly for visualization components
+
+## Contributing | 贡献
+
+We welcome contributions to this project! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+
+欢迎对本项目做出贡献！请查看我们的[贡献指南](CONTRIBUTING.md)了解更多详情。
+
+## License | 许可证
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+本项目采用 MIT 许可证 - 详情请查看[LICENSE](LICENSE)文件。
+
+## Contact | 联系方式
+
+For questions and support, please open an issue in the GitHub repository or contact the maintainers.
+
+如有问题和需要支持，请在 GitHub 仓库中提出 issue 或联系维护者。

@@ -4,7 +4,7 @@ Tests for the visualization module.
 
 import pytest
 import numpy as np
-from src.visualization.visualizer import SimulationVisualizer
+from particle_flow.visualization.visualizer import SimulationVisualizer
 import matplotlib.pyplot as plt
 
 @pytest.fixture
