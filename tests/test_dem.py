@@ -4,7 +4,8 @@ Tests for the DEM solver component.
 
 import pytest
 import numpy as np
-from src.dem.solver import DEMSolver
+from particle_flow.dem.solver import DEMSolver
+
 
 @pytest.fixture
 def config():
@@ -25,13 +26,16 @@ def config():
         }
     }
 
+
 def test_dem_solver_initialization(config):
     """Test DEM solver initialization."""
     solver = DEMSolver(config)
     assert solver.time_step == config['simulation']['time_step']
-    assert np.array_equal(solver.gravity, np.array(config['simulation']['gravity']))
+    assert np.array_equal(solver.gravity, np.array(
+        config['simulation']['gravity']))
     assert solver.particle_radius == config['dem']['particle_radius']
     assert solver.particle_density == config['dem']['particle_density']
+
 
 def test_particle_initialization(config):
     """Test particle initialization."""
@@ -43,12 +47,14 @@ def test_particle_initialization(config):
     assert len(particle_data['velocities']) == num_particles
     assert len(particle_data['forces']) == num_particles
 
+
 def test_contact_force_computation(config):
     """Test contact force computation."""
     solver = DEMSolver(config)
     forces = solver.compute_contact_forces()
     assert isinstance(forces, list)
     # Add more specific assertions once contact force computation is implemented
+
 
 def test_particle_state_update(config):
     """Test particle state update."""
@@ -57,4 +63,4 @@ def test_particle_state_update(config):
     initial_positions = solver.get_particle_data()['positions'].copy()
     solver.update_particle_states()
     updated_positions = solver.get_particle_data()['positions']
-    # Add more specific assertions once state update is implemented 
+    # Add more specific assertions once state update is implemented

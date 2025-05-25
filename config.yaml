@@ -56,8 +56,8 @@ cfd:
     - 0.0
     - 0.0
     - 0.0
-  fluid_density: 960.0
-  fluid_viscosity: 0.0055
+  fluid_density: 940.0
+  fluid_viscosity: 0.0013
   pressure_gradient:
   - 1.0
   - 0.0
@@ -93,7 +93,7 @@ coupling:
   virtual_mass: true
 dem:
   bond_radius: 0.015
-  bond_strength: 600099.0
+  bond_strength: 700000.0
   damping_coefficient: 0.1
   friction_coefficient: 0.5
   particle_density: 2650.0
@@ -131,12 +131,12 @@ experimental:
     velocity: 0.05
   velocity_points: 3
 geotechnical:
-  Cc: 1.5
-  Cu: 7.92
-  clay_content: 10.03
-  cohesion: 17.530000000000005
-  density: 1.985
-  friction_angle: 34.029999999999994
+  Cc: 15.0
+  Cu: 9.840000000000003
+  clay_content: 14.910000000000002
+  cohesion: 25.56
+  density: 0.8099999999999999
+  friction_angle: 23.95
   grain_sizes:
   - 10.0
   - 5.0
@@ -151,9 +151,9 @@ geotechnical:
   - 40.0
   - 20.0
   - 5.0
-  permeability: 1.1e-06
-  specific_gravity: 2.65
-  water_content: 8.09
+  permeability: -0.039998900000000004
+  specific_gravity: 3.22
+  water_content: 7.8700000000000045
 mitigation:
   optimization:
     constraints:

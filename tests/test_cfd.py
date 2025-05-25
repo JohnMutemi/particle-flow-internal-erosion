@@ -4,7 +4,8 @@ Tests for the CFD solver component.
 
 import pytest
 import numpy as np
-from src.cfd.solver import CFDSolver
+from particle_flow.cfd.solver import CFDSolver
+
 
 @pytest.fixture
 def config():
@@ -25,13 +26,16 @@ def config():
         }
     }
 
+
 def test_cfd_solver_initialization(config):
     """Test CFD solver initialization."""
     solver = CFDSolver(config)
     assert solver.fluid_density == config['cfd']['fluid_density']
     assert solver.fluid_viscosity == config['cfd']['fluid_viscosity']
-    assert np.array_equal(solver.pressure_gradient, np.array(config['cfd']['pressure_gradient']))
+    assert np.array_equal(solver.pressure_gradient, np.array(
+        config['cfd']['pressure_gradient']))
     assert solver.time_step == config['simulation']['time_step']
+
 
 def test_field_initialization(config):
     """Test fluid field initialization."""
@@ -40,6 +44,7 @@ def test_field_initialization(config):
     fluid_data = solver.get_fluid_data()
     assert fluid_data['velocity_field'] is not None
     assert fluid_data['pressure_field'] is not None
+
 
 def test_fluid_force_computation(config):
     """Test fluid force computation on particles."""
@@ -50,6 +55,7 @@ def test_fluid_force_computation(config):
     assert isinstance(forces, list)
     assert len(forces) == len(particle_positions)
 
+
 def test_fluid_state_update(config):
     """Test fluid state update."""
     solver = CFDSolver(config)
@@ -57,4 +63,4 @@ def test_fluid_state_update(config):
     initial_velocity = solver.get_fluid_data()['velocity_field'].copy()
     solver.update_fluid_state()
     updated_velocity = solver.get_fluid_data()['velocity_field']
-    # Add more specific assertions once fluid state update is implemented 
+    # Add more specific assertions once fluid state update is implemented

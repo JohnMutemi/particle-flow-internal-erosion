@@ -4,8 +4,9 @@ Tests for the tunnel water inrush case study.
 
 import pytest
 import numpy as np
-from src.case_studies.tunnel_water_inrush import TunnelWaterInrush
+from particle_flow.case_studies.tunnel_water_inrush import TunnelWaterInrush
 import os
+
 
 @pytest.fixture
 def config():
@@ -37,10 +38,12 @@ def config():
         }
     }
 
+
 @pytest.fixture
 def case_study(config):
     """Test case study instance."""
     return TunnelWaterInrush(config)
+
 
 def test_initialization(case_study, config):
     """Test case study initialization."""
@@ -52,10 +55,11 @@ def test_initialization(case_study, config):
     assert len(case_study.erosion_stats) == 0
     assert len(case_study.bond_health_stats) == 0
 
+
 def test_setup_initial_conditions(case_study):
     """Test setting up initial conditions."""
     case_study.setup_initial_conditions()
-    
+
     # Check tunnel geometry
     assert 'tunnel_walls' in case_study.__dict__
     assert case_study.tunnel_walls['x_min'] == 0.0
@@ -63,34 +67,37 @@ def test_setup_initial_conditions(case_study):
     assert case_study.tunnel_walls['y_min'] < 0.0
     assert case_study.tunnel_walls['y_max'] > 0.0
 
+
 def test_particle_distribution(case_study):
     """Test particle distribution setup."""
     case_study.setup_initial_conditions()
-    
+
     # Get particle positions
     positions = case_study.coupling.dem_solver.get_particle_positions()
-    
+
     # Check if particles are within tunnel bounds
     for pos in positions:
         assert case_study.tunnel_walls['x_min'] <= pos[0] <= case_study.tunnel_walls['x_max']
         assert case_study.tunnel_walls['y_min'] <= pos[1] <= case_study.tunnel_walls['y_max']
         assert case_study.tunnel_walls['z_min'] <= pos[2] <= case_study.tunnel_walls['z_max']
 
+
 def test_water_pressure_setup(case_study):
     """Test water pressure setup."""
     case_study.setup_initial_conditions()
-    
+
     # Check pressure gradient
     pressure_gradient = case_study.coupling.cfd_solver.config['pressure_gradient']
     assert pressure_gradient[0] < 0  # Negative gradient in x-direction
     assert pressure_gradient[1] == 0.0
     assert pressure_gradient[2] == 0.0
 
+
 def test_simulation_run(case_study):
     """Test running the simulation."""
     case_study.setup_initial_conditions()
     case_study.run_simulation(0.5)  # Run for 0.5 seconds
-    
+
     # Check if data was recorded
     assert len(case_study.time_steps) > 0
     assert len(case_study.erosion_stats) > 0
@@ -99,24 +106,26 @@ def test_simulation_run(case_study):
     assert len(case_study.fluid_data) > 0
     assert len(case_study.erosion_data) > 0
 
+
 def test_results_analysis(case_study):
     """Test results analysis."""
     case_study.setup_initial_conditions()
     case_study.run_simulation(0.5)
     case_study.analyze_results()
-    
+
     # Check if visualizations were created
     assert case_study.visualizer.fig is not None
+
 
 def test_save_results(case_study, tmp_path):
     """Test saving results."""
     case_study.setup_initial_conditions()
     case_study.run_simulation(0.5)
-    
+
     # Save results
     output_dir = str(tmp_path)
     case_study.save_results(output_dir)
-    
+
     # Check if files were created
     assert os.path.exists(f"{output_dir}/time_steps.npy")
     assert os.path.exists(f"{output_dir}/erosion_stats.npy")
@@ -126,10 +135,11 @@ def test_save_results(case_study, tmp_path):
     assert os.path.exists(f"{output_dir}/erosion_data.npy")
     assert os.path.exists(f"{output_dir}/simulation_animation.mp4")
 
+
 def test_close(case_study):
     """Test closing resources."""
     case_study.setup_initial_conditions()
     case_study.close()
-    
+
     # Check if visualizer was closed
-    assert case_study.visualizer.fig is None 
+    assert case_study.visualizer.fig is None
