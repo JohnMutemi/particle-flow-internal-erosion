@@ -1,0 +1,39 @@
+# Triaxial test data for comparison with water penetration test
+triaxial_data:
+  # Stress-strain data
+  stress: [0.0, 50000.0, 100000.0, 150000.0, 200000.0] # Pa
+  strain: [0.0, 0.001, 0.002, 0.003, 0.004] # m/m
+
+  # Erosion data
+  erosion_rate: [0.0, 0.001, 0.002, 0.003, 0.004] # kg/s
+  porosity: [0.3, 0.31, 0.32, 0.33, 0.34] # m3/m3
+
+  # Saturation data
+  saturation_degree: [0.0, 0.25, 0.5, 0.75, 1.0] # m3/m3
+  water_content: [0.15, 0.17, 0.19, 0.21, 0.23] # m3/m3
+
+# Comparison parameters
+comparison_parameters:
+  stress_levels: [0.2, 0.4, 0.6, 0.8, 1.0]
+  strain_rates: [1e-6, 1e-5, 1e-4] # s-1
+  confining_pressures: [50000.0, 100000.0, 200000.0] # Pa
+
+# Test conditions
+test_conditions:
+  temperature: 20.0 # C
+  duration: 3600.0 # s
+  time_step: 0.1 # s
+
+# Material properties
+material:
+  density: 1800.0 # kg/m3
+  porosity: 0.3 # m3/m3
+  permeability: 1.0e-5 # m/s
+  youngs_modulus: 1.0e9 # Pa
+  critical_shear_stress: 5000.0 # Pa
+  critical_erosion_rate: 0.1 # kg/s
+  critical_porosity: 0.4 # m3/m3
+  critical_water_content: 0.2 # m3/m3
+  saturation_rate: 1.0e-4 # s-1
+  max_water_content: 0.25 # m3/m3
+  water_adjustment_rate: 0.01 # s-1

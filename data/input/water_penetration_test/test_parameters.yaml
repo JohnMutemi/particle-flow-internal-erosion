@@ -1,0 +1,31 @@
+material:
+  critical_erosion_rate: 0.1
+  critical_porosity: 0.4
+  critical_shear_stress: 5000.0
+  critical_water_content: 0.2
+  max_water_content: 0.25
+  permeability: 1.0e-05
+  porosity: 0.3
+  saturation_rate: 0.0001
+  water_adjustment_rate: 0.01
+  youngs_modulus: 1000000000.0
+particles:
+  density: 2650.0
+  friction_coefficient: 0.5
+  number: 1000
+  restitution_coefficient: 0.3
+  size_distribution:
+    max_size: 0.005
+    mean: 0.002
+    min_size: 0.001
+    std: 0.0005
+sample:
+  diameter: 0.1
+  height: 0.2
+  initial_density: 1800.0
+  initial_water_content: 0.15
+test_conditions:
+  duration: 3600.0
+  initial_water_pressure: 100000.0
+  temperature: 20.0
+  time_step: 0.1

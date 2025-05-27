@@ -168,7 +168,7 @@ The project includes several visualization options: | 项目包含多种可视�
 
 2. Run the dashboard: | 运行仪表板：
    ```bash
-   streamlit run dashboard.py
+   streamlit run scripts/dashboard.py
    ```
 
 #### Streamlit Cloud Deployment | Streamlit 云部署
