@@ -52,6 +52,9 @@ class WaterPenetrationTest:
         self.initial_water_content = self.material_params.get(
             'water_content', 0.15)
 
+        # Advanced saturation model selection
+        self.saturation_model = self.material_params.get('saturation_model', 'linear')
+
         # Initialize saturation state with enhanced tracking
         self.saturation_state = {
             'current_water_content': self.initial_water_content,
@@ -209,10 +212,20 @@ class WaterPenetrationTest:
         return self.initial_water_content + (max_content - self.initial_water_content) * progress
 
     def _calculate_saturation_degree(self, water_content: float, pressure: float) -> float:
-        """Calculate saturation degree with enhanced model."""
+        """Calculate saturation degree with support for advanced models."""
         max_content = self.material_params.get('max_water_content', 0.25)
-        pressure_factor = 1 + (pressure / 1e6) * 0.05
-        return (water_content / max_content) * pressure_factor
+        if self.saturation_model == 'van_genuchten':
+            # van Genuchten model: S = [1 + (alpha * |psi|)^n]^(-m)
+            alpha = self.material_params.get('alpha', 0.08)
+            n = self.material_params.get('n', 1.6)
+            m = self.material_params.get('m', 1 - 1/n)
+            psi = -pressure / 1000.0  # Convert Pa to kPa and negative for suction
+            S = (1 + (alpha * abs(psi))**n) ** (-m)
+            return S
+        else:
+            # Default linear model
+            pressure_factor = 1 + (pressure / 1e6) * 0.05
+            return (water_content / max_content) * pressure_factor
 
     def _calculate_stability_index(self, water_content: float, pressure: float) -> float:
         """Calculate stability index for saturation process."""

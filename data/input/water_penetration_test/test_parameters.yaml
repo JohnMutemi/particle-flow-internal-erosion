@@ -9,6 +9,11 @@ material:
   saturation_rate: 0.0001
   water_adjustment_rate: 0.01
   youngs_modulus: 1000000000.0
+  # Advanced saturation model parameters
+  saturation_model: "van_genuchten"
+  alpha: 0.08
+  n: 1.6
+  m: 0.375
 particles:
   density: 2650.0
   friction_coefficient: 0.5

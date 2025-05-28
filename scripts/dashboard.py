@@ -14,6 +14,9 @@ References:
 - scripts/demo.py (for running simulations)
 """
 
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+
 from particle_flow.visualization.water_penetration_visualizer import WaterPenetrationVisualizer
 from particle_flow.validation.water_penetration_test import WaterPenetrationTest
 from particle_flow.validation.triaxial_validation import TriaxialTestValidator
@@ -1597,6 +1600,8 @@ def create_validation_summary(validation_manager, lang):
         )
 
     with tab2:
+           
+        st.write("DEBUG: Triaxial Test tab loaded")
         # Create visualization of validation results
         fig = make_subplots(rows=3, cols=1, subplot_titles=(
             '侵蚀分析',
@@ -2782,246 +2787,266 @@ def create_simulation_testing_section(lang):
     """Create a section for simulation testing with editable geotechnical parameters, countdown, and recent results."""
     st.header(lang['simulation_testing'])
 
-    # Create tabs for different simulation types
-    tab1, tab2 = st.tabs([
-        "Simulation",  # Using direct string instead of language key
-        "Triaxial Test"  # Using direct string instead of language key
+    # Only one tab: Simulation
+    st.subheader("Simulation")
+    # Initialize session state for simulation status if not exists
+    if 'last_run' not in st.session_state:
+        st.session_state['last_run'] = lang['not_started']
+    if 'status' not in st.session_state:
+        st.session_state['status'] = lang['ready']
+
+    # Load current geotechnical parameters
+    with open('config.yaml', 'r') as f:
+        config_data = yaml.safe_load(f)
+    geo = config_data['geotechnical']
+
+    # Create columns for simulation controls and status
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        st.subheader(lang['simulation_controls'])
+        # Simulation parameters
+        duration = st.number_input(
+            lang['simulation_duration'], min_value=5, max_value=60, value=10, step=5)
+
+        st.markdown(f"**{lang['edit_granular_curve']}:**")
+        density = st.number_input(
+            f"{lang['density']} (g/cm³)", value=float(geo['density']))
+        specific_gravity = st.number_input(
+            lang['specific_gravity'], value=float(geo['specific_gravity']))
+        water_content = st.number_input(
+            f"{lang['water_content']} (%)", value=float(geo['water_content']))
+        Cu = st.number_input(
+            f"Cu ({lang['uniformity_coefficient']})", value=float(geo['Cu']))
+        Cc = st.number_input(
+            f"Cc ({lang['curvature_coefficient']})", value=float(geo['Cc']))
+        clay_content = st.number_input(
+            f"{lang['clay_content']} (%)", value=float(geo['clay_content']))
+        cohesion = st.number_input(
+            f"{lang['cohesion']} (kPa)", value=float(geo['cohesion']))
+        friction_angle = st.number_input(
+            f"{lang['friction_angle']} (°)", value=float(geo['friction_angle']))
+        permeability = st.number_input(
+            f"{lang['permeability']} (m/s)", value=float(geo['permeability']), format="%e")
+        grain_sizes = st.text_input(f"{lang['grain_size']} ({lang['comma_separated']}, mm)", value=','.join(
+            str(x) for x in geo['grain_sizes']))
+        passing_percentages = st.text_input(f"{lang['passing_percentage']} ({lang['comma_separated']}, %)", value=','.join(
+            str(x) for x in geo['passing_percentages']))
+
+        # Start simulation button
+        if st.button(lang['start_simulation']):
+            # Update config.yaml with new geotechnical parameters
+            try:
+                new_geo = {
+                    'density': float(density),
+                    'specific_gravity': float(specific_gravity),
+                    'water_content': float(water_content),
+                    'Cu': float(Cu),
+                    'Cc': float(Cc),
+                    'clay_content': float(clay_content),
+                    'cohesion': float(cohesion),
+                    'friction_angle': float(friction_angle),
+                    'permeability': float(permeability),
+                    'grain_sizes': [float(x) for x in grain_sizes.split(',') if x.strip()],
+                    'passing_percentages': [float(x) for x in passing_percentages.split(',') if x.strip()]
+                }
+                config_data['geotechnical'] = new_geo
+                with open('config.yaml', 'w') as f:
+                    yaml.dump(config_data, f)
+                st.success(lang['parameter_updated'])
+            except Exception as e:
+                st.error(f"{lang['config_error']}: {e}")
+            # Run simulation
+            success, message = run_simulation_with_countdown(duration)
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+
+    with col2:
+        st.subheader(lang['simulation_status'])
+        # Display current simulation parameters
+        st.write(lang['current_parameters'])
+        params = {
+            lang['duration']: f"{duration} {lang['seconds']}",
+            lang['status']: st.session_state['status'],
+            lang['last_run']: st.session_state['last_run']
+        }
+        for param, value in params.items():
+            st.metric(param, value)
+
+    # Display Recent Results
+    st.markdown("---")
+    st.subheader(lang['recent_results'])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(lang['erosion_rate'], "0.85",
+                  delta="3.7%", delta_color="normal")
+    with col2:
+        st.metric(lang['pressure_distribution'], "0.92",
+                  delta="3.4%", delta_color="normal")
+    with col3:
+        st.metric(lang['velocity_profile'], "0.78",
+                  delta="4.0%", delta_color="normal")
+
+    st.subheader(lang['recent_simulation_results'])
+    tab1, tab2, tab3 = st.tabs([
+        lang['pressure_analysis'],
+        lang['velocity_analysis'],
+        lang['erosion_analysis']
     ])
-
     with tab1:
-        # Initialize session state for simulation status if not exists
-        if 'last_run' not in st.session_state:
-            st.session_state['last_run'] = lang['not_started']
-        if 'status' not in st.session_state:
-            st.session_state['status'] = lang['ready']
+        create_pressure_distribution_plot(lang)
+    with tab2:
+        create_velocity_profile_plot(lang)
+    with tab3:
+        create_erosion_plot(None, lang, key_suffix="recent_results")
 
-        # Load current geotechnical parameters
-        with open('config.yaml', 'r') as f:
-            config_data = yaml.safe_load(f)
-        geo = config_data['geotechnical']
+    with tab2:
+        # Three-Axis Simulation Section
+        st.subheader("Triaxial Test")
+        st.write(
+            "Configure parameters and run a real-time triaxial seepage simulation")
 
-        # Create columns for simulation controls and status
+        # Create columns for test parameters and visualization
         col1, col2 = st.columns([1, 2])
 
         with col1:
-            st.subheader(lang['simulation_controls'])
-            # Simulation parameters
-            duration = st.number_input(
-                lang['simulation_duration'], min_value=5, max_value=60, value=10, step=5)
+            # Test Parameters
+            st.write("**Test Parameters**")
+            confining_pressure = st.number_input(
+                "Confining Pressure (kPa)", value=100.0, format="%.1f")
+            axial_strain_rate = st.number_input(
+                "Axial Strain Rate (%/min)", value=0.1, format="%.3f")
+            sample_height = st.number_input(
+                "Sample Height (mm)", value=100.0, format="%.1f")
+            sample_diameter = st.number_input(
+                "Sample Diameter (mm)", value=50.0, format="%.1f")
 
-            st.markdown(f"**{lang['edit_granular_curve']}:**")
-            density = st.number_input(
-                f"{lang['density']} (g/cm³)", value=float(geo['density']))
-            specific_gravity = st.number_input(
-                lang['specific_gravity'], value=float(geo['specific_gravity']))
-            water_content = st.number_input(
-                f"{lang['water_content']} (%)", value=float(geo['water_content']))
-            Cu = st.number_input(
-                f"Cu ({lang['uniformity_coefficient']})", value=float(geo['Cu']))
-            Cc = st.number_input(
-                f"Cc ({lang['curvature_coefficient']})", value=float(geo['Cc']))
-            clay_content = st.number_input(
-                f"{lang['clay_content']} (%)", value=float(geo['clay_content']))
+            # Material Properties
+            st.write("**Material Properties**")
             cohesion = st.number_input(
-                f"{lang['cohesion']} (kPa)", value=float(geo['cohesion']))
+                "Cohesion (kPa)", value=17.5, format="%.1f")
             friction_angle = st.number_input(
-                f"{lang['friction_angle']} (°)", value=float(geo['friction_angle']))
-            permeability = st.number_input(
-                f"{lang['permeability']} (m/s)", value=float(geo['permeability']), format="%e")
-            grain_sizes = st.text_input(f"{lang['grain_size']} ({lang['comma_separated']}, mm)", value=','.join(
-                str(x) for x in geo['grain_sizes']))
-            passing_percentages = st.text_input(f"{lang['passing_percentage']} ({lang['comma_separated']}, %)", value=','.join(
-                str(x) for x in geo['passing_percentages']))
+                "Friction Angle (°)", value=34.0, format="%.1f")
+            min_particle_size = st.number_input(
+                "Min Particle Size (mm)", value=0.5, format="%.2f")
 
-            # Start simulation button
-            if st.button(lang['start_simulation']):
-                # Update config.yaml with new geotechnical parameters
+            # Run Test Button
+            if st.button("Run Triaxial Test"):
                 try:
-                    new_geo = {
-                        'density': float(density),
-                        'specific_gravity': float(specific_gravity),
-                        'water_content': float(water_content),
-                        'Cu': float(Cu),
-                        'Cc': float(Cc),
-                        'clay_content': float(clay_content),
-                        'cohesion': float(cohesion),
-                        'friction_angle': float(friction_angle),
-                        'permeability': float(permeability),
-                        'grain_sizes': [float(x) for x in grain_sizes.split(',') if x.strip()],
-                        'passing_percentages': [float(x) for x in passing_percentages.split(',') if x.strip()]
+                    # Initialize triaxial test validator
+                    validator = TriaxialTestValidator(
+                        'data/input/triaxial_test/test_parameters.yaml')
+
+                    # Generate test results
+                    test_data = {
+                        'time': np.linspace(0, 100, 100),
+                        'pressure': np.random.normal(confining_pressure, 5, 100),
+                        'strain': np.linspace(0, 20, 100),
+                        'stress': cohesion * (1 - np.exp(-0.2 * np.linspace(0, 20, 100))),
+                        'particle_sizes': np.random.uniform(min_particle_size, 2.0, 1000),
+                        'x': np.random.uniform(0, 1, 50),
+                        'y': np.random.uniform(0, 1, 50),
+                        'velocity_magnitude': np.random.uniform(0, 1, 50),
+                        'experimental': np.random.normal(0.5, 0.1, 100),
+                        'simulated': np.random.normal(0.5, 0.1, 100),
+                        'erosion_rate': np.random.uniform(0, 0.1, 100),
+                        # Add additional fields for advanced comparison
+                        'displacement': np.linspace(0, 0.004, 100),
+                        'porosity': np.linspace(0.3, 0.34, 100),
+                        'saturation_degree': np.linspace(0, 1, 100),
+                        'water_content': np.linspace(0.15, 0.23, 100)
                     }
-                    config_data['geotechnical'] = new_geo
-                    with open('config.yaml', 'w') as f:
-                        yaml.dump(config_data, f)
-                    st.success(lang['parameter_updated'])
+
+                    # Generate validation report
+                    report = validator.generate_validation_report(
+                        test_data)
+
+                    # Advanced triaxial comparison
+                    comparison = TriaxialComparison('data/input/water_penetration_test/triaxial_data.yaml')
+                    comparison_report = comparison.generate_comparison_report(test_data)
+
+                    # Store results in session state
+                    st.session_state.triaxial_results = {
+                        'test_data': test_data,
+                        'validation_report': report,
+                        'comparison_report': comparison_report
+                    }
+
+                    st.success("Triaxial test completed successfully!")
                 except Exception as e:
-                    st.error(f"{lang['config_error']}: {e}")
-                # Run simulation
-                success, message = run_simulation_with_countdown(duration)
-                if success:
-                    st.success(message)
-                else:
-                    st.error(message)
+                    st.error(f"Error running triaxial test: {str(e)}")
 
         with col2:
-            st.subheader(lang['simulation_status'])
-            # Display current simulation parameters
-            st.write(lang['current_parameters'])
-            params = {
-                lang['duration']: f"{duration} {lang['seconds']}",
-                lang['status']: st.session_state['status'],
-                lang['last_run']: st.session_state['last_run']
-            }
-            for param, value in params.items():
-                st.metric(param, value)
+            # Visualization
+            if 'triaxial_results' in st.session_state:
+                # Create visualizer
+                visualizer = TriaxialTestVisualizer(
+                    st.session_state.triaxial_results['validation_report'])
 
-        # Display Recent Results
-        st.markdown("---")
-        st.subheader(lang['recent_results'])
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(lang['erosion_rate'], "0.85",
-                      delta="3.7%", delta_color="normal")
-        with col2:
-            st.metric(lang['pressure_distribution'], "0.92",
-                      delta="3.4%", delta_color="normal")
-        with col3:
-            st.metric(lang['velocity_profile'], "0.78",
-                      delta="4.0%", delta_color="normal")
+                # Create combined dashboard
+                dashboard = visualizer.create_combined_dashboard(
+                    stress_data=st.session_state.triaxial_results['test_data']['stress'],
+                    strain_data=st.session_state.triaxial_results['test_data']['strain'],
+                    pore_pressure_data=st.session_state.triaxial_results['test_data']['pressure']
+                )
 
-        st.subheader(lang['recent_simulation_results'])
-        tab1, tab2, tab3 = st.tabs([
-            lang['pressure_analysis'],
-            lang['velocity_analysis'],
-            lang['erosion_analysis']
-        ])
-        with tab1:
-            create_pressure_distribution_plot(lang)
-        with tab2:
-            create_velocity_profile_plot(lang)
-        with tab3:
-            create_erosion_plot(None, lang, key_suffix="recent_results")
+                # Display dashboard
+                st.plotly_chart(dashboard, use_container_width=True)
 
-        with tab2:
-            # Three-Axis Simulation Section
-            st.subheader("Triaxial Test")
-            st.write(
-                "Configure parameters and run a real-time triaxial seepage simulation")
+                # Additional visualizations
+                st.subheader("Detailed Analysis")
+                analysis_tab1, analysis_tab2 = st.tabs(
+                    ["Pressure & Flow", "Erosion & Validation"])
 
-            # Create columns for test parameters and visualization
-            col1, col2 = st.columns([1, 2])
+                with analysis_tab1:
+                    # Create engineering visualizer for additional plots
+                    engineering_viz = EngineeringVisualizer({})
+                    fig = engineering_viz.plot_triaxial_test(
+                        st.session_state.triaxial_results['test_data'])
+                    st.plotly_chart(fig, use_container_width=True)
 
-            with col1:
-                # Test Parameters
-                st.write("**Test Parameters**")
-                confining_pressure = st.number_input(
-                    "Confining Pressure (kPa)", value=100.0, format="%.1f")
-                axial_strain_rate = st.number_input(
-                    "Axial Strain Rate (%/min)", value=0.1, format="%.3f")
-                sample_height = st.number_input(
-                    "Sample Height (mm)", value=100.0, format="%.1f")
-                sample_diameter = st.number_input(
-                    "Sample Diameter (mm)", value=50.0, format="%.1f")
+                with analysis_tab2:
+                    # Display validation metrics
+                    st.write("**Validation Metrics**")
+                    validation_data = {
+                        'Parameter': ['Cohesion', 'Friction Angle', 'Particle Sizes', 'Overall'],
+                        'Status': [
+                            '✓' if st.session_state.triaxial_results['validation_report'][
+                                'cohesion_validation']['is_valid'] else '✗',
+                            '✓' if st.session_state.triaxial_results['validation_report'][
+                                'friction_angle_validation']['is_valid'] else '✗',
+                            '✓' if st.session_state.triaxial_results['validation_report'][
+                                'particle_size_validation']['is_valid'] else '✗',
+                            '✓' if st.session_state.triaxial_results['validation_report'][
+                                'overall_validation']['is_valid'] else '✗'
+                        ],
+                        'Error (%)': [
+                            f"{st.session_state.triaxial_results['validation_report']['cohesion_validation']['error_percentage']:.2f}",
+                            f"{st.session_state.triaxial_results['validation_report']['friction_angle_validation']['error_percentage']:.2f}",
+                            "N/A",
+                            "N/A"
+                        ]
+                    }
+                    st.table(validation_data)
 
-                # Material Properties
-                st.write("**Material Properties**")
-                cohesion = st.number_input(
-                    "Cohesion (kPa)", value=17.5, format="%.1f")
-                friction_angle = st.number_input(
-                    "Friction Angle (°)", value=34.0, format="%.1f")
-                min_particle_size = st.number_input(
-                    "Min Particle Size (mm)", value=0.5, format="%.2f")
-
-                # Run Test Button
-                if st.button("Run Triaxial Test"):
-                    try:
-                        # Initialize triaxial test validator
-                        validator = TriaxialTestValidator(
-                            'data/input/triaxial_test/test_parameters.yaml')
-
-                        # Generate test results
-                        test_data = {
-                            'time': np.linspace(0, 100, 100),
-                            'pressure': np.random.normal(confining_pressure, 5, 100),
-                            'strain': np.linspace(0, 20, 100),
-                            'stress': cohesion * (1 - np.exp(-0.2 * np.linspace(0, 20, 100))),
-                            'particle_sizes': np.random.uniform(min_particle_size, 2.0, 1000),
-                            'x': np.random.uniform(0, 1, 50),
-                            'y': np.random.uniform(0, 1, 50),
-                            'velocity_magnitude': np.random.uniform(0, 1, 50),
-                            'experimental': np.random.normal(0.5, 0.1, 100),
-                            'simulated': np.random.normal(0.5, 0.1, 100),
-                            'erosion_rate': np.random.uniform(0, 0.1, 100)
-                        }
-
-                        # Generate validation report
-                        report = validator.generate_validation_report(
-                            test_data)
-
-                        # Store results in session state
-                        st.session_state.triaxial_results = {
-                            'test_data': test_data,
-                            'validation_report': report
-                        }
-
-                        st.success("Triaxial test completed successfully!")
-                    except Exception as e:
-                        st.error(f"Error running triaxial test: {str(e)}")
-
-            with col2:
-                # Visualization
-                if 'triaxial_results' in st.session_state:
-                    # Create visualizer
-                    visualizer = TriaxialTestVisualizer(
-                        st.session_state.triaxial_results['validation_report'])
-
-                    # Create combined dashboard
-                    dashboard = visualizer.create_combined_dashboard(
-                        stress_data=st.session_state.triaxial_results['test_data']['stress'],
-                        strain_data=st.session_state.triaxial_results['test_data']['strain'],
-                        pore_pressure_data=st.session_state.triaxial_results['test_data']['pressure']
-                    )
-
-                    # Display dashboard
-                    st.plotly_chart(dashboard, use_container_width=True)
-
-                    # Additional visualizations
-                    st.subheader("Detailed Analysis")
-                    analysis_tab1, analysis_tab2 = st.tabs(
-                        ["Pressure & Flow", "Erosion & Validation"])
-
-                    with analysis_tab1:
-                        # Create engineering visualizer for additional plots
-                        engineering_viz = EngineeringVisualizer({})
-                        fig = engineering_viz.plot_triaxial_test(
-                            st.session_state.triaxial_results['test_data'])
-                        st.plotly_chart(fig, use_container_width=True)
-
-                    with analysis_tab2:
-                        # Display validation metrics
-                        st.write("**Validation Metrics**")
-                        validation_data = {
-                            'Parameter': ['Cohesion', 'Friction Angle', 'Particle Sizes', 'Overall'],
-                            'Status': [
-                                '✓' if st.session_state.triaxial_results['validation_report'][
-                                    'cohesion_validation']['is_valid'] else '✗',
-                                '✓' if st.session_state.triaxial_results['validation_report'][
-                                    'friction_angle_validation']['is_valid'] else '✗',
-                                '✓' if st.session_state.triaxial_results['validation_report'][
-                                    'particle_size_validation']['is_valid'] else '✗',
-                                '✓' if st.session_state.triaxial_results['validation_report'][
-                                    'overall_validation']['is_valid'] else '✗'
-                            ],
-                            'Error (%)': [
-                                f"{st.session_state.triaxial_results['validation_report']['cohesion_validation']['error_percentage']:.2f}",
-                                f"{st.session_state.triaxial_results['validation_report']['friction_angle_validation']['error_percentage']:.2f}",
-                                "N/A",
-                                "N/A"
-                            ]
-                        }
-                        st.table(validation_data)
-                else:
-                    st.info("Run a triaxial test to see the results visualization.")
+                # Advanced comparison results
+                if 'comparison_report' in st.session_state.triaxial_results:
+                    comparison_report = st.session_state.triaxial_results['comparison_report']
+                    st.subheader("Advanced Triaxial Comparison")
+                    st.metric("Validation Score", f"{comparison_report['validation_score']:.2%}")
+                    st.subheader("Stress-Strain Comparison")
+                    st.write(comparison_report['stress_strain_comparison'])
+                    st.subheader("Erosion Comparison")
+                    st.write(comparison_report['erosion_comparison'])
+                    st.subheader("Saturation Comparison")
+                    st.write(comparison_report['saturation_comparison'])
+                    st.subheader("Recommendations")
+                    for rec in comparison_report['recommendations']:
+                        st.write(f"- {rec}")
+            else:
+                st.info("Run a triaxial test to see the results visualization.")
 
 
 def create_experimental_verification_section(lang):
